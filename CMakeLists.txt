@@ -7,7 +7,7 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Boost
-find_package(Boost 1.70.0 REQUIRED COMPONENTS system thread)
+find_package(Boost 1.70.0 REQUIRED COMPONENTS system thread filesystem)
 if (NOT Boost_FOUND)
     message(FATAL_ERROR "Cannot find Boost libraries")
 endif()

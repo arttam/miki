@@ -69,7 +69,6 @@ void listener::on_accept(beast::error_code ec, tcp::socket socket)
     }
     else
     {
-        success("Accepted ....", "on_accept", "listener");
         std::make_shared<session>(
             std::move(socket),
             ctx_,

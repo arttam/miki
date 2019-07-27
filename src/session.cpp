@@ -55,10 +55,51 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred)
     if (ec)
         return fail(ec, "read", "session");
 
-    success("TODO: Build and send response here", "on_read", "session");
-   
-    // Send the response
-    //handle_request(*doc_root_, std::move(req_), lambda_);
+    responseSP_ = std::make_shared<Parser::ResponseType>(parser_.Parse(std::move(req_)));
+    switch (responseSP_->index()) {
+        case 0: 
+            {
+                http::response<http::string_body>* payload = 
+                    &std::get<http::response<http::string_body>>(*responseSP_);
+
+                http::async_write(
+                    stream_,
+                    *payload,
+                    beast::bind_front_handler(
+                        &session::on_write,
+                        shared_from_this(),
+                        false));
+            } 
+            break;
+        case 1: 
+            {
+                auto* payload = &std::get<http::response<http::empty_body>>(*responseSP_);
+                
+                http::async_write(
+                    stream_,
+                    *payload,
+                    beast::bind_front_handler(
+                        &session::on_write,
+                        shared_from_this(),
+                        false));
+            
+            } 
+            break;
+        case 2: 
+            {
+                auto* payload = &std::get<http::response<http::file_body>>(*responseSP_);
+
+                http::async_write(
+                    stream_,
+                    *payload,
+                    beast::bind_front_handler(
+                        &session::on_write,
+                        shared_from_this(),
+                        false));
+
+            } 
+            break;
+    }
 }
 
 void session::on_write(bool close, beast::error_code ec, std::size_t bytes_transferred)

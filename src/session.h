@@ -10,6 +10,8 @@
 
 #include <memory>
 
+#include "Parser.h"
+
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
@@ -24,6 +26,10 @@ class session : public std::enable_shared_from_this<session>
     std::shared_ptr<std::string const> docRoot_;
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
+
+    // Parser
+    Parser parser_;
+    std::shared_ptr<Parser::ResponseType> responseSP_;
 
 public:
     // Take ownership of the socket

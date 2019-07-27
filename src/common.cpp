@@ -6,7 +6,7 @@
 void fail(boost::beast::error_code ec, const char *reason, const char *unit)
 {
     std::cerr << 
-        (boost::format("Error in [%1%], Reason: '%2%', Message: ") 
+        (boost::format("Error in [%1%], Reason: '%2%', Message: %3%") 
             % unit
             % reason
             % ec.message()).str() << std::endl;

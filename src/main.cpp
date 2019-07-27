@@ -18,11 +18,12 @@
 #include "server_certificate.hpp"
 #include "listener.h"
 
+std::string docRoot{"."};
+
 int main(int argc, char** argv)
 {
     std::string addressStr{"0.0.0.0"};
     unsigned short port{8080};
-    std::string docRoot{"."};
     int threads = std::thread::hardware_concurrency();
 
     using pIt = std::vector<std::string>::const_iterator;
