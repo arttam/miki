@@ -6,6 +6,7 @@
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
+#include <boost/filesystem.hpp>
 
 namespace http = boost::beast::http; // from <boost/beast/http.hpp>
 
@@ -41,8 +42,8 @@ public:
     ResponseType Parse(http::request<http::string_body>&& request);
 
 private:
-    http::response<http::string_body> FileTree(http::request<http::string_body>&& request);
-    http::response<http::file_body> FileContents(http::request<http::string_body>&& request);
+    http::response<http::string_body> FileTree(boost::filesystem::path&& target, const bool keepAlive);
+    http::response<http::file_body> FileContents(boost::filesystem::path&& target, const bool keepAlive);
 };
 
 #endif

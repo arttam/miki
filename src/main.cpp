@@ -14,6 +14,7 @@
 #include <map>
 
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 
 #include "server_certificate.hpp"
 #include "listener.h"
@@ -58,6 +59,12 @@ int main(int argc, char** argv)
                 % docRoot
                 % threads).str()
         << std::endl;
+
+    if (docRoot != ".")
+    {
+        boost::filesystem::current_path(boost::filesystem::path(docRoot));
+    }
+    docRoot = "./";
 
     const auto  address = boost::beast::net::ip::make_address(addressStr);
     boost::beast::net::io_context ioc{threads};
