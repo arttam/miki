@@ -30,7 +30,7 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     std::string _target = request.target().to_string();
 
     if (_target.empty() || _target[0] != '/' ||
-        _target.find("..") != std::string::npos) 
+        _target.find("..") != std::string::npos)
     {
         return bad_request("Invalid request target");
     }
@@ -57,11 +57,8 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 
             return bad_request(fileErr);
         }
-        std::cerr << 
-            (boost::format("Working with: relative_path: %1%; parent_path: %2%; filename: %3% ") 
-                % pTarget.relative_path()
-                % pTarget.parent_path()
-                % pTarget.filename()).str() 
+        std::cerr
+            << (boost::format("Working with: %1%") % pTarget.relative_path().string()).str()
             << std::endl;
 
         if (boost::filesystem::is_regular_file(pTarget))
@@ -87,20 +84,21 @@ http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& tar
     filesList += "</head><body>";
 
     if (boost::filesystem::exists(target)) {
-        std::vector<std::pair<std::string, int>> entries;
+        std::vector<std::pair<boost::filesystem::path, int>> entries;
         if (boost::filesystem::is_regular_file(target)) {
-            entries.emplace_back(target.string(), 1);
+            entries.emplace_back(target, 1);
         }
         else if (boost::filesystem::is_directory(target)) {
             for (boost::filesystem::directory_entry& de :
                  boost::filesystem::directory_iterator(target)) {
-                entries.emplace_back(de.path().filename().string(),
-                                     boost::filesystem::is_regular_file(de) ? 1 : 0);
+                entries.emplace_back(
+                    de.path(),
+                    boost::filesystem::is_directory(de) ? 0 : 1);
             }
 
             using elType = decltype(entries.front());
-            std::sort(entries.begin(), entries.end(), 
-                [](elType& lhs, elType& rhs) 
+            std::sort(entries.begin(), entries.end(),
+                [](elType& lhs, elType& rhs)
                 {
                     if (lhs.second == rhs.second) {
                         return (lhs.first < rhs.first);
@@ -109,13 +107,20 @@ http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& tar
                 });
 
             filesList += "<ul>";
+            if (target.string() != "./")
+            {
+                filesList +=
+                    (boost::format("<li><a href=\"/get/%1%\">..</a></li>")
+                        % target.parent_path().string()).str();
+            }
             for (const auto& entry : entries) {
-                const auto& [name, weight] = entry;
-                filesList += 
-                    (boost::format("<li>%1%<a href=\"/get/%2%/%3%\">%3%</a>%4%</li>")
+                const auto& [path, weight] = entry;
+
+                filesList +=
+                    (boost::format("<li>%1%<a href=\"/get/%2%\">%3%</a>%4%</li>")
                         % (weight == 0 ? "[" : "<i>")
-                        % target.string()
-                        % name
+                        % path.relative_path().string()
+                        % path.filename().string()
                         % (weight == 0 ? "]" : "</i>")
                     ).str();
             }
