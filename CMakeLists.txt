@@ -22,8 +22,11 @@ endif()
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIRS})
 include_directories(SYSTEM /usr/local/Cellar/openssl/1.0.2s/include)
+include_directories(common)
 
-file(GLOB SOURCES src/*.cpp)
+file(GLOB SOURCES 
+    common/*.cpp
+    src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)

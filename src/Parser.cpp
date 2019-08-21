@@ -7,6 +7,8 @@
 // Temporary
 #include <iostream>
 
+#include "../common/resource.h"
+
 extern std::string docRoot;
 
 Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
@@ -77,72 +79,52 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 
 http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& target, const bool keepAlive)
 {
-    std::string filesList {"<html><title>"};
-    filesList.append(target.string());
-    filesList += "</title><head>";
-    filesList += target.string();
-    filesList += "</head><body>";
+    std::string filesList {};
 
     if (boost::filesystem::exists(target)) {
-        std::vector<std::pair<boost::filesystem::path, int>> entries;
+        std::vector<Resource> resources;
+
         if (boost::filesystem::is_regular_file(target)) {
-            entries.emplace_back(target, 1);
+            resources.emplace_back(
+                target.filename().string(), 
+                target.relative_path().string(),
+                'p');
         }
         else if (boost::filesystem::is_directory(target)) {
             for (boost::filesystem::directory_entry& de :
                  boost::filesystem::directory_iterator(target)) {
-                entries.emplace_back(
-                    de.path(),
-                    boost::filesystem::is_directory(de) ? 0 : 1);
+
+                resources.emplace_back(
+                   de.path().filename().string(),
+                   de.path().relative_path().string(),
+                   boost::filesystem::is_directory(de) ? 'd' : 'p');
             }
 
-            using elType = decltype(entries.front());
-            std::sort(entries.begin(), entries.end(),
-                [](elType& lhs, elType& rhs)
-                {
-                    if (lhs.second == rhs.second) {
-                        return (lhs.first < rhs.first);
-                    }
-                    return (lhs.second < rhs.second);
-                });
-
-            filesList += "<ul>";
-            if (target.string() != "./")
-            {
-                filesList +=
-                    (boost::format("<li><a href=\"/get/%1%\">..</a></li>")
-                        % target.parent_path().string()).str();
+            for (const auto& resouce : resources) {
+                filesList.append(resouce.asString().append(";"));
             }
-            for (const auto& entry : entries) {
-                const auto& [path, weight] = entry;
-
-                filesList +=
-                    (boost::format("<li>%1%<a href=\"/get/%2%\">%3%</a>%4%</li>")
-                        % (weight == 0 ? "[" : "<i>")
-                        % path.relative_path().string()
-                        % path.filename().string()
-                        % (weight == 0 ? "]" : "</i>")
-                    ).str();
-            }
-            filesList += "</ul>";
         }
         else {
+            // TODO: Decide what to do with errors
+            /*
             filesList += "<h2>Path: <b>";
             filesList += target.string();
             filesList += "</b> is neither file nor directory</h2>";
+            */
         }
     }
     else {
+        // TODO: Decide what to do with errors
+        /*
         filesList += "<h2>Path: <b>";
         filesList += target.string();
         filesList += "</b> does not exists</h2>";
+        */
     }
-
-    filesList += "</body></html>";
 
     http::response<http::string_body> resp {};
     resp.result(http::status::ok);
-    resp.set(http::field::content_type, "text/html");
+    resp.set(http::field::content_type, "text/plain");
     resp.keep_alive(keepAlive);
     resp.body() = std::move(filesList);
     resp.prepare_payload();
