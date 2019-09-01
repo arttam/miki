@@ -9,13 +9,12 @@ flags = [
 '-DNDEBUG',
 '-std=c++17',
 '-x', 'c++',
-'-isystem', '/usr/include',
-'-isystem', '/usr/local/include',
+'-isystem', '/usr/local/include/c++/9.2.0',
 '-isystem', '/usr/local/include/boost',
-'-I', '.'
+'-I', './src'
 ]
 
-compilation_database_folder = './build'
+compilation_database_folder = '.'
 
 if os.path.exists( compilation_database_folder ):
   database = ycm_core.CompilationDatabase( compilation_database_folder )
