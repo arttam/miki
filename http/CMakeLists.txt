@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project (index)
+project (miki)
 
 set (CMAKE_CXX_COMPILER /Users/arturstamanis/Sources/emsdk/fastcomp/emscripten/em++)
 add_definitions(-std=c++17 -O3)
