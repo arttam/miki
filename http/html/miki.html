@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Miki 3</title>
+    </head>
+    <body>
+        <input type="text" value="" id="getme">
+        <button id="getmebtn">Get URL</button>
+        <textarea id="output" rows="18" cols="77"></textarea>
+    </body>
+    <script type='text/javascript'>
+        var getBTN = document.getElementById("getmebtn");
+        getBTN.disabled = true;
+
+        var results = document.getElementById("output");
+
+        var JSAccessorInst = {};
+        var Module = {
+            'print': function(text) { console.log('STDOUT: ' + text); },
+            'printErr': function(text) { console.log('STDERR: ' + text); },
+            onRuntimeInitialized: function() {
+                var JSAccessor = Module.Accessor.extend("Accessor", {
+                    onSuccess: function(payload) {
+                        results.value = payload;
+                    },
+                    onError: function(url, status) {
+                        results.value = "ERROR: '";
+                        results.value += url;
+                        results.value += "' (";
+                        results.value += status;
+                        results.value += ")";
+                    },
+                });
+
+                JSAccessorInst = new JSAccessor;
+
+                getBTN.disabled = false;
+                getBTN.addEventListener('click', function() {
+                    var target = document.getElementById("getme").value;
+                    JSAccessorInst.get(target);
+                });
+            }
+        };
+    </script>
+    <script async type="text/javascript" src="miki.js"></script>
+</html>
+
+

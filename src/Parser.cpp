@@ -13,7 +13,6 @@ extern std::string docRoot;
 
 Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 {
-
     // Returns a bad request response
     auto const bad_request = [&request](const std::string reason) {
         http::response<http::string_body> res {http::status::bad_request, request.version()};
@@ -30,6 +29,7 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     }
 
     std::string _target = request.target().to_string();
+    std::cerr << "Got target as: " << _target << std::endl;
 
     if (_target.empty() || _target[0] != '/' ||
         _target.find("..") != std::string::npos)
@@ -38,7 +38,7 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     }
 
     if (_target == "/") {
-        boost::filesystem::path indexFile("index.html");
+        boost::filesystem::path indexFile("miki.html");
         if (!boost::filesystem::exists(indexFile)) {
             std::string noIndex{"No default file provided"};
 
@@ -48,9 +48,31 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
         return FileContents(std::move(indexFile), request.keep_alive());
     }
 
-    const std::string browsePrefix{"/get/"};
+    // Miki parts, i.e. miki.js, miki.wasm
+    if (   _target == "/miki.js"
+        || _target == "/miki.wasm"
+        || _target == "/miki.html")
+    {
+        _target.insert(0, docRoot);
+
+        std::cerr << "Miki Part parsing: " << _target << std::endl;
+
+        boost::filesystem::path _mikiPart(_target);
+        if (!boost::filesystem::exists(_mikiPart)) {
+            std::string noMikiPart{"No miki part is avaialble: "};
+            noMikiPart += _target;
+
+            return bad_request( noMikiPart );
+        }
+
+        return FileContents(std::move(_mikiPart), request.keep_alive());
+    }
+
+    const std::string browsePrefix{"/pages/"};
     if (_target.substr(0, browsePrefix.length()) == browsePrefix) {
         _target = _target.replace(0, browsePrefix.length(), docRoot);
+
+        _target.insert(0, docRoot);
 
         boost::filesystem::path pTarget(_target);
         if (!boost::filesystem::exists(pTarget)) {
@@ -86,7 +108,7 @@ http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& tar
 
         if (boost::filesystem::is_regular_file(target)) {
             resources.emplace_back(
-                target.filename().string(), 
+                target.filename().string(),
                 target.relative_path().string(),
                 'p');
         }

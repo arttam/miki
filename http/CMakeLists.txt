@@ -19,10 +19,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/html")
 #endif(JS_ONLY)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-set(CMAKE_EXECUTABLE_SUFFIX ".html")
+set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
-set(MIKI_LINK_FLAGS "-s FETCH=1 -s NO_EXIT_RUNTIME=1  -s \"EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']\"")
-set(MIKI_TEMPLATE "--shell-file ${CMAKE_SOURCE_DIR}/templates/miki_main.html")
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${MIKI_LINK_FLAGS} ${MIKI_TEMPLATE}")
+#set(MIKI_LINK_FLAGS "-s FETCH=1 -s NO_EXIT_RUNTIME=1  -s \"EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']\"")
+#set(MIKI_TEMPLATE "--shell-file ${CMAKE_SOURCE_DIR}/templates/miki_main.html")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "--bind -s FETCH=1")
 
 #em++ -std=c++17 -Wall -O3 -s FETCH=1 -s NO_EXIT_RUNTIME=1  -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']"  --shell-file templates/miki_main.html  -o html/miki.html src/main.cpp
