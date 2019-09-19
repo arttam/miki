@@ -48,55 +48,26 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
         return FileContents(std::move(indexFile), request.keep_alive());
     }
 
-    // Miki parts, i.e. miki.js, miki.wasm
-    if (   _target == "/miki.js"
-        || _target == "/miki.wasm"
-        || _target == "/miki.html")
+    _target.insert(0, docRoot);
+
+    boost::filesystem::path pTarget(_target);
+    if (!boost::filesystem::exists(pTarget)) {
+        std::string fileErr {"File ''"};
+        fileErr.append(_target).append("' does not exists");
+
+        return bad_request(fileErr);
+    }
+    std::cerr
+        << (boost::format("Working with: %1%") % pTarget.relative_path().string()).str()
+        << std::endl;
+
+    if (boost::filesystem::is_regular_file(pTarget))
     {
-        _target.insert(0, docRoot);
-
-        std::cerr << "Miki Part parsing: " << _target << std::endl;
-
-        boost::filesystem::path _mikiPart(_target);
-        if (!boost::filesystem::exists(_mikiPart)) {
-            std::string noMikiPart{"No miki part is avaialble: "};
-            noMikiPart += _target;
-
-            return bad_request( noMikiPart );
-        }
-
-        return FileContents(std::move(_mikiPart), request.keep_alive());
+        return FileContents(std::move(pTarget), request.keep_alive());
     }
 
-    const std::string browsePrefix{"/pages/"};
-    if (_target.substr(0, browsePrefix.length()) == browsePrefix) {
-        _target = _target.replace(0, browsePrefix.length(), docRoot);
-
-        _target.insert(0, docRoot);
-
-        boost::filesystem::path pTarget(_target);
-        if (!boost::filesystem::exists(pTarget)) {
-            std::string fileErr {"File ''"};
-            fileErr.append(_target).append("' does not exists");
-
-            return bad_request(fileErr);
-        }
-        std::cerr
-            << (boost::format("Working with: %1%") % pTarget.relative_path().string()).str()
-            << std::endl;
-
-        if (boost::filesystem::is_regular_file(pTarget))
-        {
-            return FileContents(std::move(pTarget), request.keep_alive());
-        }
-
-        // Only directory left at this stage
-        return FileTree(std::move(pTarget), request.keep_alive());
-    }
-
-    std::string error {"Not implemented yet: "};
-    error.append(std::string(_target));
-    return bad_request(error);
+    // Only directory left at this stage
+    return FileTree(std::move(pTarget), request.keep_alive());
 }
 
 http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& target, const bool keepAlive)
@@ -118,7 +89,7 @@ http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& tar
 
                 resources.emplace_back(
                    de.path().filename().string(),
-                   de.path().relative_path().string(),
+                   de.path().relative_path().string().substr(2),
                    boost::filesystem::is_directory(de) ? 'd' : 'p');
             }
 
@@ -128,20 +99,10 @@ http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& tar
         }
         else {
             // TODO: Decide what to do with errors
-            /*
-            filesList += "<h2>Path: <b>";
-            filesList += target.string();
-            filesList += "</b> is neither file nor directory</h2>";
-            */
         }
     }
     else {
         // TODO: Decide what to do with errors
-        /*
-        filesList += "<h2>Path: <b>";
-        filesList += target.string();
-        filesList += "</b> does not exists</h2>";
-        */
     }
 
     http::response<http::string_body> resp {};

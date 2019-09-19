@@ -6,15 +6,28 @@
         <title>Miki 3</title>
     </head>
     <body>
-        <input type="text" value="" id="getme">
-        <button id="getmebtn">Get URL</button>
-        <textarea id="output" rows="18" cols="77"></textarea>
+
+     <div style="width: 100%; display: table;">
+        <div style="width: 100%; display: table-row">
+            <input type="text" id="currPath" style="width: 100%;" />
+        </div>
+        <div style="display: table-row">
+            <div style="width: 15%; display: table-cell;">
+                <ul id+"contentsList">
+                    <li>Some list item</li>
+                </ul>
+            </div>
+            <div style="display: table-cell;">
+                <code>
+                    Resulted code
+                </code>
+            </div>
+        </div>
+    </div>
+
     </body>
     <script type='text/javascript'>
-        var getBTN = document.getElementById("getmebtn");
-        getBTN.disabled = true;
-
-        var results = document.getElementById("output");
+        var contentsList = document.getElementById("contentsList");
 
         var JSAccessorInst = {};
         var Module = {
@@ -23,24 +36,25 @@
             onRuntimeInitialized: function() {
                 var JSAccessor = Module.Accessor.extend("Accessor", {
                     onSuccess: function(payload) {
-                        results.value = payload;
+                        for (var i=0; i<payload.size(); i++)
+                        {
+                            var mikiEl = payload.get(i);
+                            console.log(mikiEl.name + ' => ' + mikiEl.path + '(' + mikiEl.type + ')');
+                        }
                     },
                     onError: function(url, status) {
-                        results.value = "ERROR: '";
-                        results.value += url;
-                        results.value += "' (";
-                        results.value += status;
-                        results.value += ")";
+                        var errorStr = "ERROR: '";
+                        errorStr += url;
+                        errorStr += "' (";
+                        errorStr += status;
+                        errorStr += ")";
+
+                        alert(errorStr);
                     },
                 });
 
                 JSAccessorInst = new JSAccessor;
-
-                getBTN.disabled = false;
-                getBTN.addEventListener('click', function() {
-                    var target = document.getElementById("getme").value;
-                    JSAccessorInst.get(target);
-                });
+                JSAccessorInst.get("/pages/");
             }
         };
     </script>
