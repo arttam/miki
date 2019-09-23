@@ -10,22 +10,35 @@
 
 using namespace emscripten;
 
+enum class ResourceType
+{
+    Folder,
+    Page
+};
+
 struct MikiEntry
 {
     std::string name;
     std::string path;
-    char type;
+    ResourceType type;
 };
 
-std::function<void(emscripten_fetch_t *attr)> downloadSucceededImpl;
-void DownloadSucceeded(emscripten_fetch_t *attr)
+std::function<void(emscripten_fetch_t *fetch)> folderSuccessImpl;
+void FolderSuccess(emscripten_fetch_t *fetch)
 {
-    downloadSucceededImpl(attr);
+    folderSuccessImpl(fetch);
 }
-std::function<void(emscripten_fetch_t *attr)> downloadFailedImpl;
-void DownloadFailed(emscripten_fetch_t *attr)
+
+std::function<void(emscripten_fetch_t *fetch)> pageSuccessImpl;
+void PageSuccess(emscripten_fetch_t *fetch)
 {
-    downloadFailedImpl(attr);
+    pageSuccessImpl(fetch);
+}
+
+std::function<void(emscripten_fetch_t *fetch)> downloadFailedImpl;
+void DownloadFailed(emscripten_fetch_t *fetch)
+{
+    downloadFailedImpl(fetch);
 }
 
 class Accessor
@@ -33,13 +46,14 @@ class Accessor
 public:
     Accessor()
     {
-        downloadSucceededImpl = std::bind(&Accessor::OnSuceess, this, std::placeholders::_1);
-        downloadFailedImpl    = std::bind(&Accessor::OnError, this, std::placeholders::_1);
+        folderSuccessImpl  = std::bind(&Accessor::OnFolderSuccess, this, std::placeholders::_1);
+        pageSuccessImpl    = std::bind(&Accessor::OnPageSuccess, this, std::placeholders::_1);
+        downloadFailedImpl = std::bind(&Accessor::OnError, this, std::placeholders::_1);
     }
     virtual ~Accessor() {}
 
     // Request
-    void get(const std::string url)
+    void get(const std::string url, ResourceType resourceType)
     {
         emscripten_fetch_attr_t attr;
         emscripten_fetch_attr_init(&attr);
@@ -48,18 +62,36 @@ public:
 
         attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
 
-        attr.onsuccess = DownloadSucceeded;
+        switch(resourceType)
+        {
+            case ResourceType::Folder:
+                attr.onsuccess = FolderSuccess;
+                break;
+            case ResourceType::Page:
+                attr.onsuccess = PageSuccess;
+                break;
+        }
+
+        //attr.onsuccess = FolderSuccess;
         attr.onerror = DownloadFailed;
         emscripten_fetch(&attr, url.c_str());
     }
 
     // Callbacks
-    void OnSuceess(emscripten_fetch_t *fetch)
+    void OnFolderSuccess(emscripten_fetch_t *fetch)
     {
         std::string payload(fetch->data, fetch->numBytes);
         emscripten_fetch_close(fetch);
 
-        onSuccess(parsePayload(std::move(payload)));
+        onFolder(parsePayload(std::move(payload)));
+    }
+
+    void OnPageSuccess(emscripten_fetch_t *fetch)
+    {
+        std::string payload(fetch->data, fetch->numBytes);
+        emscripten_fetch_close(fetch);
+
+        onPage(std::move(payload));
     }
 
     void OnError(emscripten_fetch_t *fetch)
@@ -71,7 +103,8 @@ public:
     }
 
     // To be overriden
-    virtual void onSuccess(std::vector<MikiEntry>&& results) = 0;
+    virtual void onFolder(std::vector<MikiEntry>&& results) = 0;
+    virtual void onPage(std::string&& page) = 0;
     virtual void onError(std::string&&, unsigned short status) = 0;
 
 private:
@@ -98,16 +131,27 @@ private:
             }
             mikiEntry.name = thisEntry.substr(0, delimiter);
 
-            std::string::size_type nextDel = thisEntry.find_first_of("|", delimiter + 1);
+            std::string::size_type nextDel = thisEntry.find_first_of("|", ++delimiter);
             if (nextDel == std::string::npos)
             {
                 std::cerr << "Something wrong 2 " << std::endl;
                 break;
             }
             mikiEntry.path = thisEntry.substr(delimiter, nextDel - delimiter);
-            mikiEntry.type = thisEntry[nextDel + 1];
-
-            std::cout << "Got: " << mikiEntry.name << "; " << mikiEntry.path << "; " << mikiEntry.type << std::endl;
+            switch(thisEntry[nextDel + 1])
+            {
+                case 'p':
+                    mikiEntry.type = ResourceType::Page;
+                    break;
+                case 'd':
+                    mikiEntry.type = ResourceType::Folder;
+                    break;
+            }
+            std::cout << "Got: " 
+                << mikiEntry.name << "; " 
+                << mikiEntry.path << "; " 
+                << (mikiEntry.type == ResourceType::Folder ? "Folder" : "Page") 
+                << std::endl;
 
             result.push_back(mikiEntry);
         }
@@ -122,8 +166,12 @@ class AccessorImpl: public wrapper<Accessor>
 public:
     EMSCRIPTEN_WRAPPER(AccessorImpl);
     // Overrides
-    void onSuccess(std::vector<MikiEntry>&& elements) override {
-        return call<void>("onSuccess", elements);
+    void onFolder(std::vector<MikiEntry>&& elements) override {
+        return call<void>("onFolder", elements);
+    }
+
+    void onPage(std::string&& page) override {
+        return call<void>("onPage", page);
     }
 
     void onError(std::string&& error, unsigned short status) override {
@@ -132,12 +180,16 @@ public:
 };
 
 EMSCRIPTEN_BINDINGS(accessor) {
+    enum_<ResourceType>("ResourceType")
+        .value("Folder", ResourceType::Folder)
+        .value("Page", ResourceType::Page);
     value_object<MikiEntry>("MikiEntry")
         .field("name", &MikiEntry::name)
         .field("path", &MikiEntry::path)
         .field("type", &MikiEntry::type);
     class_<Accessor>("Accessor")
-        .function("onSuccess", &Accessor::onSuccess, pure_virtual())
+        .function("onFolder", &Accessor::onFolder, pure_virtual())
+        .function("onPage", &Accessor::onFolder, pure_virtual())
         .function("onError", &Accessor::onError, pure_virtual())
         .function("get", &Accessor::get, allow_raw_pointers())
         .allow_subclass<AccessorImpl>("AccessorImpl");

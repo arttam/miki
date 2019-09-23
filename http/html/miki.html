@@ -13,21 +13,38 @@
         </div>
         <div style="display: table-row">
             <div style="width: 15%; display: table-cell;">
-                <ul id+"contentsList">
+                <ul id="contentsList" style="list-style-type:none">
                     <li>Some list item</li>
                 </ul>
             </div>
             <div style="display: table-cell;">
-                <code>
-                    Resulted code
-                </code>
+                <div id="contentPage">
+                </div>
             </div>
         </div>
     </div>
 
     </body>
     <script type='text/javascript'>
+        var displayedPath = document.getElementById('currPath');
+
         var contentsList = document.getElementById("contentsList");
+        contentsList.addEventListener('click', function(event){
+            var thisPath = event.target.getAttribute('data-item-path');
+            if (event.target.getAttribute('data-item-type') == 'd')
+            {
+                displayedPath.value = thisPath;
+                JSAccessorInst.get(thisPath, Module.ResourceType.Folder);
+            }
+            else
+            {
+                JSAccessorInst.get(thisPath, Module.ResourceType.Page);
+            }
+        });
+
+        var contentPage = document.getElementById('contentPage');
+
+        var rootPath = "/pages/";
 
         var JSAccessorInst = {};
         var Module = {
@@ -35,12 +52,35 @@
             'printErr': function(text) { console.log('STDERR: ' + text); },
             onRuntimeInitialized: function() {
                 var JSAccessor = Module.Accessor.extend("Accessor", {
-                    onSuccess: function(payload) {
+                    onFolder: function(payload) {
+                        contentsList.innerHTML = '';
+                        // Insert .. => previous path, if not root
+                        if ((displayedPath.value + "/") != rootPath)
+                        {
+                            var lastFwdSlash = displayedPath.value.lastIndexOf("/");
+                            var backItem = document.createElement("li");
+                            backItem.textContent = "..";
+                            backItem.value = 0;
+                            backItem.setAttribute('data-item-type', 'd');
+                            backItem.setAttribute('data-item-path', displayedPath.value.substr(0, lastFwdSlash));
+                            contentsList.appendChild(backItem);
+                        }
                         for (var i=0; i<payload.size(); i++)
                         {
                             var mikiEl = payload.get(i);
-                            console.log(mikiEl.name + ' => ' + mikiEl.path + '(' + mikiEl.type + ')');
+                            var listItem = document.createElement("li");
+                            listItem.textContent = mikiEl.name;
+                            listItem.value = i;
+                            listItem.setAttribute(
+                                'data-item-type',
+                                (mikiEl.type == Module.ResourceType.Folder ? 'd' : 'p')
+                            );
+                            listItem.setAttribute('data-item-path', mikiEl.path);
+                            contentsList.appendChild(listItem);
                         }
+                    },
+                    onPage: function(payload) {
+                        contentPage.innerHTML = payload;
                     },
                     onError: function(url, status) {
                         var errorStr = "ERROR: '";
@@ -54,7 +94,10 @@
                 });
 
                 JSAccessorInst = new JSAccessor;
-                JSAccessorInst.get("/pages/");
+                displayedPath.value = rootPath;
+
+                JSAccessorInst.get(rootPath, Module.ResourceType.Folder);
+
             }
         };
     </script>
