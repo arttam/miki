@@ -3,11 +3,14 @@
 #include <boost/format.hpp>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 // Temporary
 #include <iostream>
 
 #include "../common/resource.h"
+
+#include "cmark-gfm.h"
 
 extern std::string docRoot;
 
@@ -63,11 +66,43 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 
     if (boost::filesystem::is_regular_file(pTarget))
     {
+        // Special case
+        if (pTarget.extension().string() == ".md")
+        {
+            return MDFile(std::move(pTarget), request.keep_alive());
+        }
         return FileContents(std::move(pTarget), request.keep_alive());
     }
 
     // Only directory left at this stage
     return FileTree(std::move(pTarget), request.keep_alive());
+}
+
+http::response<http::string_body> Parser::MDFile(boost::filesystem::path&& target, const bool keepAlive)
+{
+    std::ifstream mdFile(target.string());
+
+    std::string asMD;
+    asMD.assign(std::istreambuf_iterator<char>(mdFile),
+            std::istreambuf_iterator<char>());
+
+    cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
+    cmark_parser_feed(parser, asMD.c_str(), asMD.size());
+    cmark_node *document = cmark_parser_finish(parser);
+
+    std::string htmlOut(cmark_render_html(document, CMARK_OPT_DEFAULT, NULL));
+
+    cmark_parser_free(parser);
+    free(document);
+
+    http::response<http::string_body> resp {};
+    resp.result(http::status::ok);
+    resp.set(http::field::content_type, "text/markdown");
+    resp.keep_alive(keepAlive);
+    resp.body() = std::move(htmlOut);
+    resp.prepare_payload();
+
+    return resp;
 }
 
 http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& target, const bool keepAlive)

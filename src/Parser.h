@@ -14,6 +14,7 @@ class Parser
 {
     const std::map<std::string, const char*> mimeType_ {{".htm",  "text/html"},
                                                         {".html", "text/html"},
+                                                        {".md",   "text/html"},
                                                         {".php",  "text/html"},
                                                         {".css",  "text/css"},
                                                         {".txt",  "text/plain"},
@@ -44,6 +45,7 @@ public:
 
 private:
     http::response<http::string_body> FileTree(boost::filesystem::path&& target, const bool keepAlive);
+    http::response<http::string_body> MDFile(boost::filesystem::path&& target, const bool keepAlive);
     http::response<http::file_body> FileContents(boost::filesystem::path&& target, const bool keepAlive);
 };
 
