@@ -51,6 +51,11 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
         return FileContents(std::move(indexFile), request.keep_alive());
     }
 
+    if (_target == "/muki_proceed") {
+        std::cout << request.body() << std::endl;
+        return bad_request("Key is invalid");
+    }
+
     _target.insert(0, docRoot);
 
     boost::filesystem::path pTarget(_target);
