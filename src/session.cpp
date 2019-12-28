@@ -2,10 +2,8 @@
 #include "common.h"
 
 session::session(tcp::socket&& socket,
-                 ssl::context& ctx,
-                 std::shared_ptr<std::string const> const& doc_root)
+                 ssl::context& ctx)
     : stream_(std::move(socket), ctx)
-    , docRoot_(doc_root)
 {}
 
 // Start the asynchronous operation

@@ -23,7 +23,6 @@ class session : public std::enable_shared_from_this<session>
 {
     beast::ssl_stream<beast::tcp_stream> stream_;
     beast::flat_buffer buffer_;
-    std::shared_ptr<std::string const> docRoot_;
     http::request<http::string_body> req_;
     std::shared_ptr<void> res_;
 
@@ -36,8 +35,7 @@ public:
     explicit
     session(
         tcp::socket&& socket,
-        ssl::context& ctx,
-        std::shared_ptr<std::string const> const& doc_root);
+        ssl::context& ctx);
 
     // Start the asynchronous operation
     void run();

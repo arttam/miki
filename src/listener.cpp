@@ -6,12 +6,10 @@
 
 listener::listener(net::io_context& ioc,
                    ssl::context& ctx,
-                   tcp::endpoint endpoint,
-                   std::shared_ptr<std::string const> const& doc_root)
+                   tcp::endpoint endpoint)
     : ioc_(ioc)
     , ctx_(ctx)
     , acceptor_(ioc)
-    , doc_root_(doc_root)
 {
     beast::error_code ec;
 
@@ -71,8 +69,7 @@ void listener::on_accept(beast::error_code ec, tcp::socket socket)
     {
         std::make_shared<session>(
             std::move(socket),
-            ctx_,
-            doc_root_)->run();
+            ctx_)->run();
     }
 
     // Accept another connection

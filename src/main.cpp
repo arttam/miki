@@ -19,10 +19,10 @@
 #include "server_certificate.hpp"
 #include "listener.h"
 
-std::string docRoot{"."};
 
 int main(int argc, char** argv)
 {
+    std::string docRoot{"."};
     std::string addressStr{"0.0.0.0"};
     unsigned short port{8080};
     int threads = std::thread::hardware_concurrency();
@@ -65,7 +65,6 @@ int main(int argc, char** argv)
         std::filesystem::current_path(std::filesystem::path(docRoot));
         std::cerr << "Current path now: " << std::filesystem::current_path() << std::endl;
     }
-    docRoot = "./";
 
     const auto  address = boost::beast::net::ip::make_address(addressStr);
     boost::beast::net::io_context ioc{threads};
@@ -76,8 +75,7 @@ int main(int argc, char** argv)
     std::make_shared<listener>(
         ioc, 
         ctx, 
-        boost::asio::ip::tcp::endpoint{address, port}, 
-        std::make_shared<std::string>(docRoot))->run();
+        boost::asio::ip::tcp::endpoint{address, port})->run();
     
     std::vector<std::thread> v;
     v.reserve(threads - 1);
