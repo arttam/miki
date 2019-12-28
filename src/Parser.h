@@ -47,6 +47,8 @@ private:
     http::response<http::string_body> FileTree(boost::filesystem::path&& target, const bool keepAlive);
     http::response<http::string_body> MDFile(boost::filesystem::path&& target, const bool keepAlive);
     http::response<http::file_body> FileContents(boost::filesystem::path&& target, const bool keepAlive);
+    // Edit
+    http::response<http::string_body> EditResult(std::string&& editCommand, const bool keepAlive);
 };
 
 #endif

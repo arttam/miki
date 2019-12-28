@@ -7,10 +7,19 @@
     </head>
     <body>
 
-     <div style="width: 100%; display: table;">
-        <div style="width: 100%; display: table-row">
-            <input type="text" id="currPath" style="width: 100%;" />
+    <div style="width: 100%; display: table; z-index: 100">
+        <div style="display: table-row">
+            <div style="width: 80%; display: table-cell;">
+                <input type="text" id="currPath" style="width: 90%;">
+            </div>
+            <div style="display:table-cell;">
+                <button type="button" id="btnAdd">+</button>
+                <button type="button" id="btnDel">-</button>
+                <button type="button" id="btnEdit">.</button>
+            </div>
         </div>
+    </div>
+     <div style="width: 100%; display: table; z-index: 100">
         <div style="display: table-row">
             <div style="width: 15%; display: table-cell;">
                 <ul id="contentsList" style="list-style-type:none">
@@ -22,6 +31,17 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="editDiv" style="z-index: 1000; position: fixed; top: 40px; left: 40px; bottom: 40px; right: 40px; display: none;">
+        <input type="text" style="width: 90%;"/>
+        <br />
+        <input type="text" style="width: 90%;"/>
+        <br />
+        <textarea rows="20" cols="80">
+        </textarea>
+        <br />
+        <button type="button" id="closeEdit">Close</button>
     </div>
 
     </body>
@@ -43,6 +63,43 @@
         });
 
         var contentPage = document.getElementById('contentPage');
+
+        // Edit form
+        function showEditDiv() {
+            var parentDiv = document.getElementById('editDiv');
+            parentDiv.style.zIndex = "1";
+            parentDiv.style.display = 'block';
+            // dim others
+            displayedPath.style.opacity = '.2';
+            contentsList.style.opacity = '.2';
+            contentPage.style.opacity = '.2';
+        };
+        
+        function hideEditDiv() {
+            var parentDiv = document.getElementById('editDiv');
+            parentDiv.style.zIndex = "1000";
+            parentDiv.style.display = 'none';
+            // undim others
+            displayedPath.style.opacity = '1';
+            contentsList.style.opacity = '1';
+            contentPage.style.opacity = '1';
+        };
+
+        document.getElementById('closeEdit').addEventListener('click', function(event) {
+            hideEditDiv();
+        });
+
+        document.getElementById('btnAdd').addEventListener('click', function(event) {
+            showEditDiv();
+        });
+
+        document.getElementById('btnDel').addEventListener('click', function(event) {
+            showEditDiv();
+        });
+
+        document.getElementById('btnEdit').addEventListener('click', function(event) {
+            showEditDiv();
+        });
 
         var rootPath = "/pages/";
 

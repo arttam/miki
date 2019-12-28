@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(miki CXX)
 
-#set (CMAKE_CXX_COMPILER /usr/local/bin/clang++)
+#set (CMAKE_CXX_COMPILER /usr/local/bin/g++-9)
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)

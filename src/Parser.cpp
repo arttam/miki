@@ -1,9 +1,14 @@
-#include "Parser.h"
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+#include <iterator>
+#include <string>
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <regex>
+#include <filesystem>
+
+#include "Parser.h"
 
 // Temporary
 #include <iostream>
@@ -51,9 +56,9 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
         return FileContents(std::move(indexFile), request.keep_alive());
     }
 
-    if (_target == "/muki_proceed") {
-        std::cout << request.body() << std::endl;
-        return bad_request("Key is invalid");
+    // Check if edit command
+    if (_target.substr(0, 5) == "/muki") {
+        return EditResult(std::move(_target), request.keep_alive());
     }
 
     _target.insert(0, docRoot);
@@ -189,4 +194,82 @@ http::response<http::file_body> Parser::FileContents(boost::filesystem::path&& t
     res.prepare_payload();
 
     return res;
+}
+
+http::response<http::string_body> Parser::EditResult(std::string&& editCommand, const bool keepAlive)
+{
+    // idea: /muki/<COMMAND>/<FULL_PATH_TO_TARGET>
+    // where
+    // <COMMAND> - [add|rm|edit]
+    // <FULL_PATH_TO_TARGET> - full path to target
+
+    std::regex separator("/");
+    std::sregex_token_iterator reIt(editCommand.begin(), editCommand.end(), separator, -1);
+    std::sregex_token_iterator reEnd{};
+    std::vector<std::string> commandParts;
+    std::copy_if(reIt, reEnd, 
+        std::back_inserter(commandParts),
+        [](const auto& part)
+        {
+            return !(part.str().empty());
+        });
+
+    // Returns a bad request response
+    auto const bad_request = [](const std::string reason) {
+        http::response<http::string_body> error {};
+        error.result(http::status::bad_request);
+        error.set(http::field::server, "Miki");
+        error.set(http::field::content_type, "text/html");
+        error.keep_alive(false);
+        error.body() = reason;
+        error.prepare_payload();
+        return error;
+    };
+
+    if (commandParts.size() < 3)
+    {
+        std::string errorText{"ERROR: Command does not have enough parameters"};
+        return bad_request(errorText);
+    }
+
+    enum class commandIdx: unsigned { MUKI=0, COMMAND, START_OF_PATH };
+    const std::vector<std::string> validCommands{"add", "rm", "edit"};
+    const auto cmdIt = std::find(validCommands.begin(), validCommands.end(), commandParts[static_cast<size_t>(commandIdx::COMMAND)]);
+    if (cmdIt == validCommands.end()) 
+    {
+        // Report error
+        std::string errorText{"ERROR: Command : '"};
+        errorText.append(commandParts[static_cast<unsigned>(commandIdx::COMMAND)]).append("' not supported");
+        return bad_request(errorText);
+    }
+
+    // Debug output
+    std::string editResponse;
+    for (const auto& cmdPart : commandParts)
+    {
+        editResponse.append(cmdPart).append("\r\n");
+    }
+    editResponse.append("\r\n");
+
+    for (auto idx=0; idx < commandParts.size(); ++idx)
+    {
+        editResponse.append(std::to_string(idx)).append(" => '").append(commandParts[idx]).append("'\r\n");
+    }
+    editResponse.append("\r\n");
+
+    editResponse.append("MUKI: ").append(std::to_string(static_cast<unsigned>(commandIdx::MUKI))).append("\r\n");
+    editResponse.append("COMMAND: ").append(std::to_string(static_cast<unsigned>(commandIdx::COMMAND))).append("\r\n");
+    editResponse.append("START_OF_PATH: ").append(std::to_string(static_cast<unsigned>(commandIdx::START_OF_PATH))).append("\r\n");
+    editResponse.append("\r\n");
+
+    editResponse.append("Command: ").append(commandParts[static_cast<unsigned>(commandIdx::COMMAND)]).append("\r\n");
+
+    http::response<http::string_body> resp{};
+    resp.result(http::status::ok);
+    resp.set(http::field::content_type, "text/plain");
+    resp.keep_alive(keepAlive);
+    resp.body() = std::move(editResponse);
+    resp.prepare_payload();
+
+    return resp;
 }
