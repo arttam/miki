@@ -6,7 +6,7 @@
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace http = boost::beast::http; // from <boost/beast/http.hpp>
 
@@ -44,9 +44,9 @@ public:
     ResponseType Parse(http::request<http::string_body>&& request);
 
 private:
-    http::response<http::string_body> FileTree(boost::filesystem::path&& target, const bool keepAlive);
-    http::response<http::string_body> MDFile(boost::filesystem::path&& target, const bool keepAlive);
-    http::response<http::file_body> FileContents(boost::filesystem::path&& target, const bool keepAlive);
+    http::response<http::string_body> FileTree(std::filesystem::path&& target, const bool keepAlive);
+    http::response<http::string_body> MDFile(std::filesystem::path&& target, const bool keepAlive);
+    http::response<http::file_body> FileContents(std::filesystem::path&& target, const bool keepAlive);
     // Edit
     http::response<http::string_body> EditResult(std::string&& editCommand, const bool keepAlive);
 };

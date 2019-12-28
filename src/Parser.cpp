@@ -1,7 +1,8 @@
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <boost/format.hpp>
 #include <iterator>
 #include <string>
+#include <system_error>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -46,9 +47,12 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     }
 
     if (_target == "/") {
-        boost::filesystem::path indexFile("miki.html");
-        if (!boost::filesystem::exists(indexFile)) {
-            std::string noIndex{"No default file provided"};
+        std::filesystem::path indexFile("miki.html");
+        std::error_code ec;
+        if (!std::filesystem::exists(indexFile, ec))
+        {
+            std::string noIndex{"No default file provided: "};
+            noIndex.append(ec.message());
 
             return bad_request(noIndex);
         }
@@ -61,20 +65,27 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
         return EditResult(std::move(_target), request.keep_alive());
     }
 
-    _target.insert(0, docRoot);
+    std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
 
-    boost::filesystem::path pTarget(_target);
-    if (!boost::filesystem::exists(pTarget)) {
-        std::string fileErr {"File ''"};
-        fileErr.append(_target).append("' does not exists");
+    pTarget += _target;
 
-        return bad_request(fileErr);
-    }
     std::cerr
-        << (boost::format("Working with: %1%") % pTarget.relative_path().string()).str()
+        << (boost::format("Working with: %1%") % pTarget.string()).str()
         << std::endl;
 
-    if (boost::filesystem::is_regular_file(pTarget))
+    std::error_code ec;
+    if (!std::filesystem::exists(pTarget, ec))
+    {
+        std::string fileError{"File '"};
+        fileError
+            .append(pTarget)
+            .append("' does not extist: ")
+            .append(ec.message());
+
+        return bad_request(fileError);
+    }
+
+    if (std::filesystem::is_regular_file(pTarget))
     {
         // Special case
         if (pTarget.extension().string() == ".md")
@@ -88,7 +99,7 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     return FileTree(std::move(pTarget), request.keep_alive());
 }
 
-http::response<http::string_body> Parser::MDFile(boost::filesystem::path&& target, const bool keepAlive)
+http::response<http::string_body> Parser::MDFile(std::filesystem::path&& target, const bool keepAlive)
 {
     std::ifstream mdFile(target.string());
 
@@ -115,27 +126,27 @@ http::response<http::string_body> Parser::MDFile(boost::filesystem::path&& targe
     return resp;
 }
 
-http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& target, const bool keepAlive)
+http::response<http::string_body> Parser::FileTree(std::filesystem::path&& target, const bool keepAlive)
 {
     std::string filesList {};
 
-    if (boost::filesystem::exists(target)) {
+    if (std::filesystem::exists(target)) {
         std::vector<Resource> resources;
 
-        if (boost::filesystem::is_regular_file(target)) {
+        if (std::filesystem::is_regular_file(target)) {
             resources.emplace_back(
                 target.filename().string(),
                 target.relative_path().string(),
                 'p');
         }
-        else if (boost::filesystem::is_directory(target)) {
-            for (boost::filesystem::directory_entry& de :
-                 boost::filesystem::directory_iterator(target)) {
+        else if (std::filesystem::is_directory(target)) {
+            for (const std::filesystem::directory_entry& de :
+                 std::filesystem::directory_iterator(target)) {
 
                 resources.emplace_back(
                    de.path().filename().string(),
                    de.path().relative_path().string().substr(2),
-                   boost::filesystem::is_directory(de) ? 'd' : 'p');
+                   std::filesystem::is_directory(de) ? 'd' : 'p');
             }
 
             for (const auto& resouce : resources) {
@@ -160,7 +171,7 @@ http::response<http::string_body> Parser::FileTree(boost::filesystem::path&& tar
     return resp;
 }
 
-http::response<http::file_body> Parser::FileContents(boost::filesystem::path&& target, const bool keepAlive)
+http::response<http::file_body> Parser::FileContents(std::filesystem::path&& target, const bool keepAlive)
 {
     // Helper's lamdas
     auto contentType([& mimeType_ = mimeType_](boost::beast::string_view path) {
@@ -207,7 +218,7 @@ http::response<http::string_body> Parser::EditResult(std::string&& editCommand, 
     std::sregex_token_iterator reIt(editCommand.begin(), editCommand.end(), separator, -1);
     std::sregex_token_iterator reEnd{};
     std::vector<std::string> commandParts;
-    std::copy_if(reIt, reEnd, 
+    std::copy_if(reIt, reEnd,
         std::back_inserter(commandParts),
         [](const auto& part)
         {
@@ -235,7 +246,7 @@ http::response<http::string_body> Parser::EditResult(std::string&& editCommand, 
     enum class commandIdx: unsigned { MUKI=0, COMMAND, START_OF_PATH };
     const std::vector<std::string> validCommands{"add", "rm", "edit"};
     const auto cmdIt = std::find(validCommands.begin(), validCommands.end(), commandParts[static_cast<size_t>(commandIdx::COMMAND)]);
-    if (cmdIt == validCommands.end()) 
+    if (cmdIt == validCommands.end())
     {
         // Report error
         std::string errorText{"ERROR: Command : '"};

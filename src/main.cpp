@@ -14,7 +14,7 @@
 #include <map>
 
 #include <boost/format.hpp>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #include "server_certificate.hpp"
 #include "listener.h"
@@ -62,7 +62,8 @@ int main(int argc, char** argv)
 
     if (docRoot != ".")
     {
-        boost::filesystem::current_path(boost::filesystem::path(docRoot));
+        std::filesystem::current_path(std::filesystem::path(docRoot));
+        std::cerr << "Current path now: " << std::filesystem::current_path() << std::endl;
     }
     docRoot = "./";
 
