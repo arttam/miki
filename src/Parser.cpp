@@ -1,6 +1,8 @@
 #include <filesystem>
 #include <boost/format.hpp>
+#include <cstdio>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -17,8 +19,6 @@
 #include "../common/resource.h"
 
 #include "cmark-gfm.h"
-
-extern std::string docRoot;
 
 Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 {
@@ -62,7 +62,7 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 
     // Check if edit command
     if (_target.substr(0, 5) == "/muki") {
-        return EditResult(std::move(_target), request.keep_alive());
+        return EditResult(std::move(request));
     }
 
     std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
@@ -207,23 +207,12 @@ http::response<http::file_body> Parser::FileContents(std::filesystem::path&& tar
     return res;
 }
 
-http::response<http::string_body> Parser::EditResult(std::string&& editCommand, const bool keepAlive)
+http::response<http::string_body> Parser::EditResult(http::request<http::string_body>&& request)
 {
     // idea: /muki/<COMMAND>/<FULL_PATH_TO_TARGET>
     // where
     // <COMMAND> - [add|rm|edit]
     // <FULL_PATH_TO_TARGET> - full path to target
-
-    std::regex separator("/");
-    std::sregex_token_iterator reIt(editCommand.begin(), editCommand.end(), separator, -1);
-    std::sregex_token_iterator reEnd{};
-    std::vector<std::string> commandParts;
-    std::copy_if(reIt, reEnd,
-        std::back_inserter(commandParts),
-        [](const auto& part)
-        {
-            return !(part.str().empty());
-        });
 
     // Returns a bad request response
     auto const bad_request = [](const std::string reason) {
@@ -237,50 +226,148 @@ http::response<http::string_body> Parser::EditResult(std::string&& editCommand, 
         return error;
     };
 
-    if (commandParts.size() < 3)
+    std::string editCommand = request.target().to_string();
+
+    // disassembling command
+    if (std::count(editCommand.begin(), editCommand.end(), '/') < 3)
     {
         std::string errorText{"ERROR: Command does not have enough parameters"};
         return bad_request(errorText);
     }
 
-    enum class commandIdx: unsigned { MUKI=0, COMMAND, START_OF_PATH };
-    const std::vector<std::string> validCommands{"add", "rm", "edit"};
-    const auto cmdIt = std::find(validCommands.begin(), validCommands.end(), commandParts[static_cast<size_t>(commandIdx::COMMAND)]);
-    if (cmdIt == validCommands.end())
+    // removing /muki/
+    editCommand.erase(0, 6);
+    const auto commandEnd = editCommand.find_first_of("/");
+    const std::string command = editCommand.substr(0, commandEnd);
+    const std::string targetPath = editCommand.substr(commandEnd);
+    const std::string payload = request.body();
+
+    using commandHelper = std::optional<std::string> (Parser::*)(const std::string&, const std::string&) const;
+    const std::map<const std::string, commandHelper> commandsMap
+    {
+        {"add",  &Parser::addEntry},
+        {"rm",   &Parser::rmEntry},
+        {"edit", &Parser::editEntry}
+    };
+
+    if (const auto cmdIt = commandsMap.find(command);
+        cmdIt == commandsMap.end())
     {
         // Report error
         std::string errorText{"ERROR: Command : '"};
-        errorText.append(commandParts[static_cast<unsigned>(commandIdx::COMMAND)]).append("' not supported");
+        errorText.append(command).append("' not supported");
         return bad_request(errorText);
     }
-
-    // Debug output
-    std::string editResponse;
-    for (const auto& cmdPart : commandParts)
+    else
     {
-        editResponse.append(cmdPart).append("\r\n");
-    }
-    editResponse.append("\r\n");
+        std::cerr << "Updating using path: " << targetPath << "; payload: " << payload << std::endl;
+        const auto commandResult = std::invoke(cmdIt->second, this, targetPath, payload);
+        if (commandResult.has_value())
+        {
+            std::string errorStr{"Error occurred whilst executing: "};
+            errorStr
+                .append(command)
+                .append(", Message: ").append(*commandResult);
 
-    for (auto idx=0; idx < commandParts.size(); ++idx)
+            std::cerr << "Error while executing hangler: " << cmdIt->first << "; message: " << errorStr << std::endl;
+            return bad_request(errorStr);
+        }
+        else
+        {
+            std::string okStr{"ok"};
+            http::response<http::string_body> resp{};
+            resp.result(http::status::ok);
+            resp.set(http::field::content_type, "text/plain");
+            resp.keep_alive(request.keep_alive());
+            resp.body() = std::move(okStr); 
+            resp.prepare_payload();
+
+            return resp;
+        }
+    }
+}
+
+std::optional<std::string> Parser::rmEntry(const std::string& path, const std::string&) const
+{
+    // Remove entry, if not exists - return error
+    std::cerr << "Executin rm" << std::endl;
+
+    std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
+    pTarget += path;
+
+    if (std::filesystem::exists(pTarget))
     {
-        editResponse.append(std::to_string(idx)).append(" => '").append(commandParts[idx]).append("'\r\n");
+        std::error_code ec;
+        if (!std::filesystem::remove(pTarget, ec))
+        {
+            return (
+                boost::format("Failed to remove '%1%', error message: '%2%'") 
+                    % path
+                    % ec.message()).str();
+        }
     }
-    editResponse.append("\r\n");
+    else
+    {
+        return (boost::format("Remove candidate '%1%' not found") % path).str();
+    }
 
-    editResponse.append("MUKI: ").append(std::to_string(static_cast<unsigned>(commandIdx::MUKI))).append("\r\n");
-    editResponse.append("COMMAND: ").append(std::to_string(static_cast<unsigned>(commandIdx::COMMAND))).append("\r\n");
-    editResponse.append("START_OF_PATH: ").append(std::to_string(static_cast<unsigned>(commandIdx::START_OF_PATH))).append("\r\n");
-    editResponse.append("\r\n");
+    return {};
+}
 
-    editResponse.append("Command: ").append(commandParts[static_cast<unsigned>(commandIdx::COMMAND)]).append("\r\n");
+std::optional<std::string> Parser::addEntry(const std::string& path, const std::string& data) const
+{
+    // Add entry, if wrong path - return error
+    std::cerr << "Executin add" << std::endl;
 
-    http::response<http::string_body> resp{};
-    resp.result(http::status::ok);
-    resp.set(http::field::content_type, "text/plain");
-    resp.keep_alive(keepAlive);
-    resp.body() = std::move(editResponse);
-    resp.prepare_payload();
+    std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
+    pTarget += path;
 
-    return resp;
+    std::filesystem::path pTargetDirectory = pTarget;
+    pTargetDirectory.remove_filename();
+
+    std::error_code ec;
+    if (!std::filesystem::create_directories(pTargetDirectory, ec) && ec.value() != 0)
+    {
+        return (boost::format("Failed create destination directory '%1%', error message: '%2%'")
+                    % pTargetDirectory.string()
+                    % ec.message()).str();
+    }
+
+    std::ofstream addedEntry(pTarget.string(), std::ios::out);
+    if (!addedEntry)
+    {
+        return (boost::format("Failed to open '%1%' for writting") % pTarget.string()).str();
+    }
+
+    addedEntry.write(data.c_str(), data.length());
+    addedEntry.flush();
+    addedEntry.close();
+
+    return {};
+}
+
+std::optional<std::string> Parser::editEntry(const std::string& path, const std::string& data) const
+{
+    // Replace entry, if wrong path - return error
+    std::cerr << "Executin edit" << std::endl;
+
+    std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
+    pTarget += path;
+
+    if (!std::filesystem::exists(pTarget))
+    {
+        return (boost::format("Failed to find '%1%' for edit") % pTarget).str();
+    }
+
+    std::ofstream edittedEntry(pTarget.string(), std::ios::out|std::ios::trunc);
+    if (!edittedEntry)
+    {
+        return (boost::format("Failed to open '%1%' for writting") % pTarget).str();
+    }
+
+    edittedEntry.write(data.c_str(), data.length());
+    edittedEntry.flush();
+    edittedEntry.close();
+    
+    return {};
 }

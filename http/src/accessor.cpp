@@ -189,7 +189,7 @@ EMSCRIPTEN_BINDINGS(accessor) {
         .field("type", &MikiEntry::type);
     class_<Accessor>("Accessor")
         .function("onFolder", &Accessor::onFolder, pure_virtual())
-        .function("onPage", &Accessor::onFolder, pure_virtual())
+        .function("onPage", &Accessor::onPage, pure_virtual())
         .function("onError", &Accessor::onError, pure_virtual())
         .function("get", &Accessor::get, allow_raw_pointers())
         .allow_subclass<AccessorImpl>("AccessorImpl");

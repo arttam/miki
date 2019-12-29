@@ -7,6 +7,7 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <filesystem>
+#include <optional>
 
 namespace http = boost::beast::http; // from <boost/beast/http.hpp>
 
@@ -48,7 +49,12 @@ private:
     http::response<http::string_body> MDFile(std::filesystem::path&& target, const bool keepAlive);
     http::response<http::file_body> FileContents(std::filesystem::path&& target, const bool keepAlive);
     // Edit
-    http::response<http::string_body> EditResult(std::string&& editCommand, const bool keepAlive);
+    http::response<http::string_body> EditResult(http::request<http::string_body>&& request);
+
+    // Edit helpers
+    std::optional<std::string> rmEntry(const std::string& path, const std::string& data) const;
+    std::optional<std::string> addEntry(const std::string& path, const std::string& data) const;
+    std::optional<std::string> editEntry(const std::string& path, const std::string& data) const;
 };
 
 #endif

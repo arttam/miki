@@ -34,14 +34,14 @@
     </div>
 
     <div id="editDiv" style="z-index: 1000; position: fixed; top: 40px; left: 40px; bottom: 40px; right: 40px; display: none;">
-        <input type="text" style="width: 90%;"/>
+        <input type="hidden" id="dialogType" />
+        <input id="editContainerPath" type="text" style="width: 90%;"/>
         <br />
-        <input type="text" style="width: 90%;"/>
-        <br />
-        <textarea rows="20" cols="80">
+        <textarea id="editContent" rows="20" cols="80">
         </textarea>
         <br />
-        <button type="button" id="closeEdit">Close</button>
+        <button type="button" id="closeEdit">Cancel</button>
+        <button type="button" id="commitEdit">Commit</button>
     </div>
 
     </body>
@@ -63,12 +63,35 @@
         });
 
         var contentPage = document.getElementById('contentPage');
+        var activePath;
+        document.getElementById('contentsList').addEventListener('click', function(event) {
+            activePath = event.target.dataset.itemPath;
+        });
 
         // Edit form
         function showEditDiv() {
             var parentDiv = document.getElementById('editDiv');
             parentDiv.style.zIndex = "1";
             parentDiv.style.display = 'block';
+
+            document.getElementById('editContainerPath').value = activePath;
+            // setting contents
+            var editContent = document.getElementById('editContent');
+            var editType    = document.getElementById('dialogType').value;
+            switch (editType)
+            {
+                case 'edit':
+                    editContent.value = contentPage.innerHTML;
+                case 'add':
+                    editContent.style.display = 'block';
+                    document.getElementById('commitEdit').innerText = "Commit";
+                    break;
+                case 'rm':
+                    editContent.style.display = 'none';
+                    document.getElementById('commitEdit').innerText = "Remove";
+                    break;
+            }
+
             // dim others
             displayedPath.style.opacity = '.2';
             contentsList.style.opacity = '.2';
@@ -79,6 +102,11 @@
             var parentDiv = document.getElementById('editDiv');
             parentDiv.style.zIndex = "1000";
             parentDiv.style.display = 'none';
+            // setting contents
+            var editContent = document.getElementById('editContent');
+            editContent.value = "";
+            var containerPath = document.getElementById('editContainerPath');
+            containerPath.value = "";
             // undim others
             displayedPath.style.opacity = '1';
             contentsList.style.opacity = '1';
@@ -89,15 +117,34 @@
             hideEditDiv();
         });
 
-        document.getElementById('btnAdd').addEventListener('click', function(event) {
-            showEditDiv();
+        document.getElementById('commitEdit').addEventListener('click', function(event) {
+            url = document.getElementById('editContainerPath').value;
+            type = document.getElementById('dialogType').value;
+
+            url = "/muki/" + type + "/" + url;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader('Content-Type', 'application/text');
+            xhr.send(document.getElementById('editContent').value);
+
+            console.log('Calling: ' + url);
+
+            hideEditDiv();
         });
 
-        document.getElementById('btnDel').addEventListener('click', function(event) {
+        document.getElementById('btnAdd').addEventListener('click', function(event) {
+            document.getElementById('dialogType').value = "add";
             showEditDiv();
         });
 
         document.getElementById('btnEdit').addEventListener('click', function(event) {
+            document.getElementById('dialogType').value = "edit";
+            showEditDiv();
+        });
+
+        document.getElementById('btnDel').addEventListener('click', function(event) {
+            document.getElementById('dialogType').value = "rm";
             showEditDiv();
         });
 
