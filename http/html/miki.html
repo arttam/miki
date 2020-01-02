@@ -37,7 +37,7 @@
         <input type="hidden" id="dialogType" />
         <input id="editContainerPath" type="text" style="width: 90%;"/>
         <br />
-        <textarea id="editContent" rows="20" cols="80">
+        <textarea id="editContent" placeholder="Loading ..." rows="20" cols="80">
         </textarea>
         <br />
         <button type="button" id="closeEdit">Cancel</button>
@@ -81,7 +81,6 @@
             switch (editType)
             {
                 case 'edit':
-                    editContent.value = contentPage.innerHTML;
                 case 'add':
                     editContent.style.display = 'block';
                     document.getElementById('commitEdit').innerText = "Commit";
@@ -139,6 +138,10 @@
         });
 
         document.getElementById('btnEdit').addEventListener('click', function(event) {
+            var path = activePath;
+            path += '-raw';
+            JSAccessorInst.get(path, Module.ResourceType.Edit);
+
             document.getElementById('dialogType').value = "edit";
             showEditDiv();
         });
@@ -185,6 +188,9 @@
                     },
                     onPage: function(payload) {
                         contentPage.innerHTML = payload;
+                    },
+                    onEdit: function(payload) {
+                        document.getElementById('editContent').value = payload;        
                     },
                     onError: function(url, status) {
                         var errorStr = "ERROR: '";

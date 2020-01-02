@@ -13,7 +13,8 @@ using namespace emscripten;
 enum class ResourceType
 {
     Folder,
-    Page
+    Page,
+    Edit
 };
 
 struct MikiEntry
@@ -35,6 +36,12 @@ void PageSuccess(emscripten_fetch_t *fetch)
     pageSuccessImpl(fetch);
 }
 
+std::function<void(emscripten_fetch_t *fetch)> editSuccessImpl;
+void EditSuccess(emscripten_fetch_t *fetch)
+{
+    editSuccessImpl(fetch);
+}
+
 std::function<void(emscripten_fetch_t *fetch)> downloadFailedImpl;
 void DownloadFailed(emscripten_fetch_t *fetch)
 {
@@ -48,6 +55,7 @@ public:
     {
         folderSuccessImpl  = std::bind(&Accessor::OnFolderSuccess, this, std::placeholders::_1);
         pageSuccessImpl    = std::bind(&Accessor::OnPageSuccess, this, std::placeholders::_1);
+        editSuccessImpl    = std::bind(&Accessor::OnEditSuccess, this, std::placeholders::_1);
         downloadFailedImpl = std::bind(&Accessor::OnError, this, std::placeholders::_1);
     }
     virtual ~Accessor() {}
@@ -69,6 +77,9 @@ public:
                 break;
             case ResourceType::Page:
                 attr.onsuccess = PageSuccess;
+                break;
+            case ResourceType::Edit:
+                attr.onsuccess = EditSuccess;
                 break;
         }
 
@@ -94,6 +105,14 @@ public:
         onPage(std::move(payload));
     }
 
+    void OnEditSuccess(emscripten_fetch_t *fetch)
+    {
+        std::string payload(fetch->data, fetch->numBytes);
+        emscripten_fetch_close(fetch);
+
+        onEdit(std::move(payload));
+    }
+
     void OnError(emscripten_fetch_t *fetch)
     {
         std::string error(fetch->url);
@@ -105,6 +124,7 @@ public:
     // To be overriden
     virtual void onFolder(std::vector<MikiEntry>&& results) = 0;
     virtual void onPage(std::string&& page) = 0;
+    virtual void onEdit(std::string&& page) = 0;
     virtual void onError(std::string&&, unsigned short status) = 0;
 
 private:
@@ -174,6 +194,10 @@ public:
         return call<void>("onPage", page);
     }
 
+    void onEdit(std::string&& page) override {
+        return call<void>("onEdit", page);
+    }
+
     void onError(std::string&& error, unsigned short status) override {
         return call<void>("onError", error, status);
     }
@@ -182,7 +206,8 @@ public:
 EMSCRIPTEN_BINDINGS(accessor) {
     enum_<ResourceType>("ResourceType")
         .value("Folder", ResourceType::Folder)
-        .value("Page", ResourceType::Page);
+        .value("Page", ResourceType::Page)
+        .value("Edit", ResourceType::Edit);
     value_object<MikiEntry>("MikiEntry")
         .field("name", &MikiEntry::name)
         .field("path", &MikiEntry::path)
@@ -190,6 +215,7 @@ EMSCRIPTEN_BINDINGS(accessor) {
     class_<Accessor>("Accessor")
         .function("onFolder", &Accessor::onFolder, pure_virtual())
         .function("onPage", &Accessor::onPage, pure_virtual())
+        .function("onEdit", &Accessor::onEdit, pure_virtual())
         .function("onError", &Accessor::onError, pure_virtual())
         .function("get", &Accessor::get, allow_raw_pointers())
         .allow_subclass<AccessorImpl>("AccessorImpl");

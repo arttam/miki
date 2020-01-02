@@ -65,6 +65,17 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
         return EditResult(std::move(request));
     }
 
+    // In case of edit - we would add '-raw' suffix to file name 
+    // And would send it without MD generation
+    bool rawMDFile{false};
+    if (const auto rawPos = _target.find("-raw", _target.length() - 4, 4);
+        rawPos != std::string::npos)
+    {
+        std::cerr << "Raw file request, target was: " << _target << std::endl;
+        rawMDFile = true;
+        _target.erase(rawPos);
+    }
+
     std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
 
     pTarget += _target;
@@ -88,7 +99,7 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     if (std::filesystem::is_regular_file(pTarget))
     {
         // Special case
-        if (pTarget.extension().string() == ".md")
+        if (pTarget.extension().string() == ".md" && !rawMDFile)
         {
             return MDFile(std::move(pTarget), request.keep_alive());
         }
