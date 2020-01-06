@@ -104,5 +104,38 @@ std::string Resource::asString() const
     return response;
 }
 
+bool Resource::operator <(const Resource& other) const
+{
+    // Folder, File, Other
+    if (type_ == other.type_)
+    {
+        return (name_ < other.name_);
+    }
+
+    if (type_ == ResourceType::Folder && other.type_ != ResourceType::Folder)
+    {
+        return true;
+    }
+    else if (other.type_ == ResourceType::Folder)
+    {
+        return false;
+    }
+    else if (type_ == ResourceType::Page && other.type_ != ResourceType::Page)
+    {
+        return true;
+    }
+    else if (other.type_ == ResourceType::Page)
+    {
+        return false;
+    }
+    else 
+    {
+        return (type_ != ResourceType::Other);
+    }
+
+    return false;
+}
+
 std::ostream& operator<<(std::ostream& os, const Resource& resource);
+
 

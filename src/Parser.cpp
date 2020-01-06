@@ -38,7 +38,6 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     }
 
     std::string _target = request.target().to_string();
-    std::cerr << "Got target as: " << _target << std::endl;
 
     if (_target.empty() || _target[0] != '/' ||
         _target.find("..") != std::string::npos)
@@ -71,7 +70,6 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     if (const auto rawPos = _target.find("-raw", _target.length() - 4, 4);
         rawPos != std::string::npos)
     {
-        std::cerr << "Raw file request, target was: " << _target << std::endl;
         rawMDFile = true;
         _target.erase(rawPos);
     }
@@ -79,10 +77,6 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
     std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
 
     pTarget += _target;
-
-    std::cerr
-        << (boost::format("Working with: %1%") % pTarget.string()).str()
-        << std::endl;
 
     std::error_code ec;
     if (!std::filesystem::exists(pTarget, ec))
@@ -159,6 +153,8 @@ http::response<http::string_body> Parser::FileTree(std::filesystem::path&& targe
                    de.path().relative_path().string().substr(2),
                    std::filesystem::is_directory(de) ? 'd' : 'p');
             }
+
+            std::sort(resources.begin(), resources.end());
 
             for (const auto& resouce : resources) {
                 filesList.append(resouce.asString().append(";"));
@@ -271,7 +267,6 @@ http::response<http::string_body> Parser::EditResult(http::request<http::string_
     }
     else
     {
-        std::cerr << "Updating using path: " << targetPath << "; payload: " << payload << std::endl;
         const auto commandResult = std::invoke(cmdIt->second, this, targetPath, payload);
         if (commandResult.has_value())
         {
@@ -280,7 +275,6 @@ http::response<http::string_body> Parser::EditResult(http::request<http::string_
                 .append(command)
                 .append(", Message: ").append(*commandResult);
 
-            std::cerr << "Error while executing hangler: " << cmdIt->first << "; message: " << errorStr << std::endl;
             return bad_request(errorStr);
         }
         else
@@ -301,8 +295,6 @@ http::response<http::string_body> Parser::EditResult(http::request<http::string_
 std::optional<std::string> Parser::rmEntry(const std::string& path, const std::string&) const
 {
     // Remove entry, if not exists - return error
-    std::cerr << "Executin rm" << std::endl;
-
     std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
     pTarget += path;
 
@@ -328,8 +320,6 @@ std::optional<std::string> Parser::rmEntry(const std::string& path, const std::s
 std::optional<std::string> Parser::addEntry(const std::string& path, const std::string& data) const
 {
     // Add entry, if wrong path - return error
-    std::cerr << "Executin add" << std::endl;
-
     std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
     pTarget += path;
 
@@ -360,8 +350,6 @@ std::optional<std::string> Parser::addEntry(const std::string& path, const std::
 std::optional<std::string> Parser::editEntry(const std::string& path, const std::string& data) const
 {
     // Replace entry, if wrong path - return error
-    std::cerr << "Executin edit" << std::endl;
-
     std::filesystem::path pTarget(std::filesystem::relative(std::filesystem::current_path()));
     pTarget += path;
 

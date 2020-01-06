@@ -21,6 +21,8 @@ public:
     Resource() = default;
     Resource(const Resource& src) = default;
     Resource(Resource&& obj) = default;
+    Resource& operator=(const Resource& other) = default;
+    Resource& operator=(Resource&& other) = default;
 
     Resource(const std::string& stringSrc);
     Resource(const std::string& name, const std::string& path, char type);
@@ -48,6 +50,8 @@ public:
     }
 
     std::string asString() const;
+
+    bool operator <(const Resource& other) const;
 };
 
 std::ostream& operator << (std::ostream& os, const Resource& resource);
