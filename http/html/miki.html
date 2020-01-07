@@ -166,7 +166,7 @@
                         {
                             var lastFwdSlash = displayedPath.value.lastIndexOf("/");
                             var backItem = document.createElement("li");
-                            backItem.textContent = "..";
+                            backItem.textContent = "[ .. ]";
                             backItem.value = 0;
                             backItem.setAttribute('data-item-type', 'd');
                             backItem.setAttribute('data-item-path', displayedPath.value.substr(0, lastFwdSlash));
@@ -176,7 +176,7 @@
                         {
                             var mikiEl = payload.get(i);
                             var listItem = document.createElement("li");
-                            listItem.textContent = mikiEl.name;
+                            listItem.textContent = (mikiEl.type == Module.ResourceType.Folder ? '[ ' + mikiEl.name + ' ]' : mikiEl.name);
                             listItem.value = i;
                             listItem.setAttribute(
                                 'data-item-type',
