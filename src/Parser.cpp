@@ -10,6 +10,7 @@
 #include <fstream>
 #include <regex>
 #include <filesystem>
+#include <numeric> // accumulate
 
 #include "Parser.h"
 
@@ -19,6 +20,58 @@
 #include "../common/resource.h"
 
 #include "cmark-gfm.h"
+
+std::string urlDecode(const std::string target)
+{
+    std::string percentBuf{};
+    std::string response = std::accumulate(
+        target.begin(), target.end(), std::string{},
+        [&percentBuf](std::string response, const char ch) {
+            if (!percentBuf.empty()) {
+                if (percentBuf.length() == 3) {
+                    // Try to parse
+                    response += static_cast<char>(std::stoi(percentBuf.substr(1), nullptr, 16));
+                    percentBuf.clear();
+                    // Noow checking current character
+                    if (ch == '%') {
+                        percentBuf += ch;
+                    }
+                    else {
+                        response += ch;
+                    }
+                } 
+                else {
+                    if (ch >= '0' && ch <= '9') {
+                        percentBuf += ch;
+                    }
+                    else if (ch >= 'a' && ch <= 'f') {
+                        percentBuf += ch;
+                    }
+                    else if (ch >= 'A' && ch <= 'F') {
+                        percentBuf += ch;
+                    }
+                    else {
+                        // non hex char - adding everyting including '%' to result
+                        response += percentBuf;
+                        percentBuf.clear();
+                    }
+                }
+            } 
+            else if (ch == '%') {
+                percentBuf += ch;
+            } 
+            else {
+                response += ch;
+            }
+            return response;
+        });
+
+    if (!percentBuf.empty() && percentBuf.length() == 3) {
+        response += static_cast<char>(std::stoi(percentBuf.substr(1), nullptr, 16));
+    }
+
+    return response;
+}
 
 Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 {
@@ -37,7 +90,7 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
         return bad_request("Method is not supported");
     }
 
-    std::string _target = request.target().to_string();
+    std::string _target = urlDecode(request.target().to_string());
 
     if (_target.empty() || _target[0] != '/' ||
         _target.find("..") != std::string::npos)
@@ -233,7 +286,7 @@ http::response<http::string_body> Parser::EditResult(http::request<http::string_
         return error;
     };
 
-    std::string editCommand = request.target().to_string();
+    std::string editCommand = urlDecode(request.target().to_string());
 
     // disassembling command
     if (std::count(editCommand.begin(), editCommand.end(), '/') < 3)
