@@ -8,16 +8,6 @@ file (GLOB SOURCES src/*.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/html")
 
-#if(JS_ONLY)
-#message(STATUS "Setting compilation target to native JavaScript")
-#set(CMAKE_EXECUTABLE_SUFFIX ".js")
-#set_target_properties(a PROPERTIES LINK_FLAGS "-s EXPORTED_FUNCTIONS='[_main]'")
-#else(JS_ONLY)
-#message(STATUS "Setting compilation target to WASM")
-#set(CMAKE_EXECUTABLE_SUFFIX ".wasm.js")
-#set_target_properties(a PROPERTIES LINK_FLAGS "-s WASM=1 -s BINARYEN_METHOD='native-wasm' -s EXPORTED_FUNCTIONS='[_main]'")
-#endif(JS_ONLY)
-
 add_executable(${PROJECT_NAME} ${SOURCES})
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
