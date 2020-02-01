@@ -40,20 +40,24 @@
         <textarea id="editContent" placeholder="Loading ..." rows="20" cols="80">
         </textarea>
         <br />
-        <button type="button" id="closeEdit">Cancel</button>
-        <button type="button" id="commitEdit">Commit</button>
+        <button type="button" id="closeEdit" style="float: left;">Cancel</button>
+        <button type="button" id="commitEdit" style="display: none;float: left">Commit</button>
+        <button type="button" id="addEdit" style="display: none;float: left">Create</button>
+        <button type="button" id="rmEdit" style="display: none;float: left">Delete</button>
     </div>
 
     </body>
     <script type='text/javascript'>
         var displayedPath = document.getElementById('currPath');
 
+        var contentPage  = document.getElementById('contentPage');
         var contentsList = document.getElementById("contentsList");
         contentsList.addEventListener('click', function(event){
             var thisPath = event.target.getAttribute('data-item-path');
             if (event.target.getAttribute('data-item-type') == 'd')
             {
                 displayedPath.value = thisPath;
+                contentPage.innerHTML = '';
                 JSAccessorInst.get(thisPath, Module.ResourceType.Folder);
             }
             else
@@ -62,7 +66,6 @@
             }
         });
 
-        var contentPage = document.getElementById('contentPage');
         var activePath;
         document.getElementById('contentsList').addEventListener('click', function(event) {
             activePath = event.target.dataset.itemPath;
@@ -81,13 +84,22 @@
             switch (editType)
             {
                 case 'edit':
+                    editContent.style.display = 'block';
+                    document.getElementById('commitEdit').style.display = 'block';
+                    document.getElementById('addEdit').style.display = 'none';
+                    document.getElementById('rmEdit').style.display = 'none';
+                    break;
                 case 'add':
                     editContent.style.display = 'block';
-                    document.getElementById('commitEdit').innerText = "Commit";
+                    document.getElementById('addEdit').style.display = 'block';
+                    document.getElementById('commitEdit').style.display = 'none';
+                    document.getElementById('rmEdit').style.display = 'none';
                     break;
                 case 'rm':
                     editContent.style.display = 'none';
-                    document.getElementById('commitEdit').innerText = "Remove";
+                    document.getElementById('rmEdit').style.display = 'block';
+                    document.getElementById('addEdit').style.display = 'none';
+                    document.getElementById('commitEdit').style.display = 'none';
                     break;
             }
 
@@ -117,19 +129,25 @@
         });
 
         document.getElementById('commitEdit').addEventListener('click', function(event) {
-            url = document.getElementById('editContainerPath').value;
-            type = document.getElementById('dialogType').value;
+            type    = document.getElementById('dialogType').value;
+            payload = document.getElementById('editContent').value
+            url     = "/muki/edit/" + document.getElementById('editContainerPath').value;
 
-            url = "/muki/" + type + "/" + url;
+            JSAccessorInst.post(url, payload);
+        });
 
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", url, true);
-            xhr.setRequestHeader('Content-Type', 'application/text');
-            xhr.send(document.getElementById('editContent').value);
+        document.getElementById('addEdit').addEventListener('click', function(event) {
+            type    = document.getElementById('dialogType').value;
+            payload = document.getElementById('editContent').value
+            url     = "/muki/add/" + document.getElementById('editContainerPath').value;
 
-            console.log('Calling: ' + url);
+            JSAccessorInst.post(url, payload);
+        });
 
-            hideEditDiv();
+        document.getElementById('rmEdit').addEventListener('click', function(event) {
+            url = "/muki/rm/" + document.getElementById('editContainerPath').value;
+
+            JSAccessorInst.post(url, "");
         });
 
         document.getElementById('btnAdd').addEventListener('click', function(event) {
@@ -200,6 +218,30 @@
                         errorStr += ")";
 
                         alert(errorStr);
+                    },
+                    onPostSuccess: function(postResponse) {
+                        hideEditDiv();
+                        switch (document.getElementById('dialogType').value)
+                        {
+                            case 'edit':
+                                JSAccessorInst.get(activePath, Module.ResourceType.Page);
+                                break;
+                            case 'add':
+                            case 'rm':
+                                contentPage.innerHTML = '';
+                                JSAccessorInst.get(activePath.substr(0, activePath.lastIndexOf('/') + 1), Module.ResourceType.Folder);
+                                break;
+                        }
+                    },
+                    onPostError: function(errStr, errCode) {
+                        var errorStr = "POST ERROR: '";
+                        errorStr += errStr;
+                        errorStr += "' (";
+                        errorStr += errCode;
+                        errorStr += ")";
+
+                        alert(errorStr);
+                        hideEditDiv();
                     },
                 });
 
