@@ -2,7 +2,8 @@
 
 C++ will implicitly let you convert a Derived pointer into a Base pointer.This process is sometimes called **upcasting**
 
-Although dynamic casts have a few different capabilities, by far the most common use for dynamic casting is for converting base-class pointers into derived-class pointers. This process is called **downcasting**.
+Although dynamic casts have a few different capabilities, by far the most common use for dynamic casting is for converting base-class pointers into derived-class pointers. \
+This process is called **downcasting**.
 
 ```cpp
 
@@ -47,5 +48,9 @@ Also note that there are several cases where downcasting using dynamic_cast will
 
 #### Downcasting with static_cast
 
-It turns out that downcasting can also be done with static_cast. The main difference is that static_cast does no runtime type checking to ensure that what you’re doing makes sense. This makes using static_cast faster, but more dangerous. If you cast a Base* to a Derived*, it will “succeed” even if the Base pointer isn’t pointing to a Derived object. This will result in undefined behavior when you try to access the resulting Derived pointer (that is actually pointing to a Base object).
+It turns out that downcasting can also be done with static_cast. \
+The main difference is that static_cast does no runtime type checking to ensure that what you’re doing makes sense. \
+This makes using static_cast faster, but more dangerous. \
+If you cast a Base* to a Derived*, it will “succeed” even if the Base pointer isn’t pointing to a Derived object. \
+This will result in undefined behavior when you try to access the resulting Derived pointer (that is actually pointing to a Base object).
 

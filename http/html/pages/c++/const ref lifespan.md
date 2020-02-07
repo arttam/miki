@@ -4,7 +4,7 @@ Having:
 
 ```cpp
 
-std:: string ReturnStringValue() 
+std::string ReturnStringValue() 
 { 
     return "string value"; 
 } 
@@ -15,8 +15,8 @@ Results of:
 
 ```cpp
 
-1. std:: string& val = ReturnStringValue();
-2. const std:: string& val = ReturnStringValue();
+1. std::string& val = ReturnStringValue();
+2. const std::string& val = ReturnStringValue();
 
 ```
 
