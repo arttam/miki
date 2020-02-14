@@ -1,0 +1,94 @@
+body {
+    background-color: #001a33;
+    color: lightgrey;
+}
+
+pre {
+    background-color: #371f06;
+    color: #e6e600;
+}
+
+.addressContainer {
+    width: 100%;
+    display: table;
+    z-index: 100;
+}
+
+.addressLine {
+    display: table-row;
+}
+
+.addressInputContainer {
+    width: 80%;
+    display: table-cell;
+}
+
+.addressInput {
+    width: 90%;
+    border: none;
+    color: lightcyan;
+    background-color: #001a22;
+}
+
+.addressButtons {
+    display: table-cell;
+    background-color: #001a33;
+}
+
+.addressButtons button {
+    color: floralwhite;
+    background-color: #001a33;
+}
+
+.entirePage {
+    width: 100%;
+    display: table;
+    z-index: 100;
+}
+
+.entirePageDiv {
+    display: table-row;
+}
+
+.currentContentList {
+    width: 15%;
+    display: table-cell;
+}
+
+.currentContentDiv {
+    display: table-cell;
+}
+
+.currentContent {
+}
+
+.language-cpp {
+    color: lightyellow;
+}
+
+.language-bash {
+    color: lightgrey;
+}
+
+.editBox {
+    z-index: 1000;
+    position: fixed;
+    top: 40px;
+    left: 40px;
+    bottom: 40px;
+    right: 40px;
+    background-color: #001a33;
+    color: lightgrey;
+}
+
+.editButton {
+    float: left;
+    display: none;
+    background-color: #001a33;
+    color: lightcyan;
+}
+
+.editTextArea {
+    background-color: #371f06;
+    color: lightyellow;
+}

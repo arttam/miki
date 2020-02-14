@@ -3,47 +3,48 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" href="miki.css">       
         <title>Miki 3</title>
     </head>
     <body>
 
-    <div style="width: 100%; display: table; z-index: 100">
-        <div style="display: table-row">
-            <div style="width: 80%; display: table-cell;">
-                <input type="text" id="currPath" style="width: 90%;">
+    <div class="addressContainer">
+        <div class="addressLine">
+            <div class="addressInputContainer">
+                <input class="addressInput" type="text" id="currPath" style="width: 90%;">
             </div>
-            <div style="display:table-cell;">
+            <div class="addressButtons">
                 <button type="button" id="btnAdd">+</button>
                 <button type="button" id="btnDel">-</button>
                 <button type="button" id="btnEdit">.</button>
             </div>
         </div>
     </div>
-     <div style="width: 100%; display: table; z-index: 100">
-        <div style="display: table-row">
-            <div style="width: 15%; display: table-cell;">
-                <ul id="contentsList" style="list-style-type:none">
+     <div class="entirePage">
+        <div class="entirePageDiv">
+            <div class="currentContentList">
+                <ul id="contentsList">
                     <li>Some list item</li>
                 </ul>
             </div>
-            <div style="display: table-cell;">
-                <div id="contentPage">
+            <div class="currentContentDiv">
+                <div class="currentContent" id="contentPage">
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="editDiv" style="z-index: 1000; position: fixed; top: 40px; left: 40px; bottom: 40px; right: 40px; display: none;">
+    <div class="editBox" id="editDiv" class="editBox" style="display: none;">
         <input type="hidden" id="dialogType" />
-        <input id="editContainerPath" type="text" style="width: 90%;"/>
+        <input id="editContainerPath" type="text" class="addressInput"/>
         <br />
-        <textarea id="editContent" placeholder="Loading ..." rows="20" cols="80">
+        <textarea id="editContent" placeholder="Loading ..." rows="20" cols="80" class="editTextArea">
         </textarea>
         <br />
-        <button type="button" id="closeEdit" style="float: left;">Cancel</button>
-        <button type="button" id="commitEdit" style="display: none;float: left">Commit</button>
-        <button type="button" id="addEdit" style="display: none;float: left">Create</button>
-        <button type="button" id="rmEdit" style="display: none;float: left">Delete</button>
+        <button type="button" id="closeEdit" class="editButton">Cancel</button>
+        <button type="button" id="commitEdit" class="editButton">Commit</button>
+        <button type="button" id="addEdit" class="editButton">Create</button>
+        <button type="button" id="rmEdit" class="editButton">Delete</button>
     </div>
 
     </body>
@@ -76,6 +77,9 @@
             var parentDiv = document.getElementById('editDiv');
             parentDiv.style.zIndex = "1";
             parentDiv.style.display = 'block';
+
+            // Cancel always available
+            document.getElementById('closeEdit').style.display = 'block';
 
             document.getElementById('editContainerPath').value = activePath;
             // setting contents
