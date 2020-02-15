@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <iterator>
 #include <numeric>  // accumulate
 #include <optional>
@@ -22,45 +23,49 @@
 std::string urlDecode(const std::string target)
 {
 	std::string percentBuf{};
-	std::string response = std::accumulate(target.begin(), target.end(), std::string{}, [&percentBuf](std::string response, const char ch) {
-		if (!percentBuf.empty()) {
-			if (percentBuf.length() == 3) {
-				// Try to parse
-				response += static_cast<char>(std::stoi(percentBuf.substr(1), nullptr, 16));
-				percentBuf.clear();
-				// Noow checking current character
-				if (ch == '%') {
-					percentBuf += ch;
-				}
-				else {
-					response += ch;
-				}
-			}
-			else {
-				if (ch >= '0' && ch <= '9') {
-					percentBuf += ch;
-				}
-				else if (ch >= 'a' && ch <= 'f') {
-					percentBuf += ch;
-				}
-				else if (ch >= 'A' && ch <= 'F') {
-					percentBuf += ch;
-				}
-				else {
-					// non hex char - adding everyting including '%' to result
-					response += percentBuf;
-					percentBuf.clear();
-				}
-			}
-		}
-		else if (ch == '%') {
-			percentBuf += ch;
-		}
-		else {
-			response += ch;
-		}
-		return response;
-	});
+	std::string response = std::accumulate(
+	    target.begin(),
+	    target.end(),
+	    std::string{},
+	    [&percentBuf](std::string response, const char ch) {
+		    if (!percentBuf.empty()) {
+			    if (percentBuf.length() == 3) {
+				    // Try to parse
+				    response += static_cast<char>(std::stoi(percentBuf.substr(1), nullptr, 16));
+				    percentBuf.clear();
+				    // Noow checking current character
+				    if (ch == '%') {
+					    percentBuf += ch;
+				    }
+				    else {
+					    response += ch;
+				    }
+			    }
+			    else {
+				    if (ch >= '0' && ch <= '9') {
+					    percentBuf += ch;
+				    }
+				    else if (ch >= 'a' && ch <= 'f') {
+					    percentBuf += ch;
+				    }
+				    else if (ch >= 'A' && ch <= 'F') {
+					    percentBuf += ch;
+				    }
+				    else {
+					    // non hex char - adding everyting including '%' to result
+					    response += percentBuf;
+					    percentBuf.clear();
+				    }
+			    }
+		    }
+		    else if (ch == '%') {
+			    percentBuf += ch;
+		    }
+		    else {
+			    response += ch;
+		    }
+		    return response;
+	    });
 
 	if (!percentBuf.empty() && percentBuf.length() == 3) {
 		response += static_cast<char>(std::stoi(percentBuf.substr(1), nullptr, 16));
@@ -113,7 +118,8 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 	// In case of edit - we would add '-raw' suffix to file name
 	// And would send it without MD generation
 	bool rawMDFile{false};
-	if (const auto rawPos = _target.find("-raw", _target.length() - 4, 4); rawPos != std::string::npos) {
+	if (const auto rawPos = _target.find("-raw", _target.length() - 4, 4);
+	    rawPos != std::string::npos) {
 		rawMDFile = true;
 		_target.erase(rawPos);
 	}
@@ -142,7 +148,8 @@ Parser::ResponseType Parser::Parse(http::request<http::string_body>&& request)
 	return FileTree(std::move(pTarget), request.keep_alive());
 }
 
-http::response<http::string_body> Parser::MDFile(std::filesystem::path&& target, const bool keepAlive)
+http::response<http::string_body> Parser::MDFile(std::filesystem::path&& target,
+                                                 const bool              keepAlive)
 {
 	std::ifstream mdFile(target.string());
 
@@ -171,7 +178,8 @@ http::response<http::string_body> Parser::MDFile(std::filesystem::path&& target,
 	return resp;
 }
 
-http::response<http::string_body> Parser::FileTree(std::filesystem::path&& target, const bool keepAlive)
+http::response<http::string_body> Parser::FileTree(std::filesystem::path&& target,
+                                                   const bool              keepAlive)
 {
 	namespace fs = std::filesystem;
 	std::string filesList{};
@@ -180,11 +188,14 @@ http::response<http::string_body> Parser::FileTree(std::filesystem::path&& targe
 		std::vector<Resource> resources;
 
 		if (fs::is_regular_file(target)) {
-			resources.emplace_back(target.filename().string(), target.relative_path().string(), 'p');
+			resources.emplace_back(
+			    target.filename().string(), target.relative_path().string(), 'p');
 		}
 		else if (fs::is_directory(target)) {
 			for (const fs::directory_entry& de : fs::directory_iterator(target)) {
-				resources.emplace_back(de.path().filename().string(), de.path().relative_path().string().substr(2), fs::is_directory(de) ? 'd' : 'p');
+				resources.emplace_back(de.path().filename().string(),
+				                       de.path().relative_path().string().substr(2),
+				                       fs::is_directory(de) ? 'd' : 'p');
 			}
 
 			std::sort(resources.begin(), resources.end());
@@ -211,7 +222,8 @@ http::response<http::string_body> Parser::FileTree(std::filesystem::path&& targe
 	return resp;
 }
 
-http::response<http::file_body> Parser::FileContents(std::filesystem::path&& target, const bool keepAlive)
+http::response<http::file_body> Parser::FileContents(std::filesystem::path&& target,
+                                                     const bool              keepAlive)
 {
 	// Helper's lamdas
 	auto contentType([& mimeType_ = mimeType_](boost::beast::string_view path) {
@@ -281,8 +293,10 @@ http::response<http::string_body> Parser::EditResult(http::request<http::string_
 	const std::string targetPath = editCommand.substr(commandEnd);
 	const std::string payload    = request.body();
 
-	using commandHelper = std::optional<std::string> (Parser::*)(const std::string&, const std::string&) const;
-	const std::map<const std::string, commandHelper> commandsMap{{"add", &Parser::addEntry}, {"rm", &Parser::rmEntry}, {"edit", &Parser::editEntry}};
+	using commandHelper =
+	    std::optional<std::string> (Parser::*)(const std::string&, const std::string&) const;
+	const std::map<const std::string, commandHelper> commandsMap{
+	    {"add", &Parser::addEntry}, {"rm", &Parser::rmEntry}, {"edit", &Parser::editEntry}};
 
 	if (const auto cmdIt = commandsMap.find(command); cmdIt == commandsMap.end()) {
 		// Report error
@@ -321,7 +335,9 @@ std::optional<std::string> Parser::rmEntry(const std::string& path, const std::s
 	if (std::filesystem::exists(pTarget)) {
 		std::error_code ec;
 		if (!std::filesystem::remove(pTarget, ec)) {
-			return (boost::format("Failed to remove '%1%', error message: '%2%'") % path % ec.message()).str();
+			return (boost::format("Failed to remove '%1%', error message: '%2%'") % path %
+			        ec.message())
+			    .str();
 		}
 	}
 	else {
@@ -342,7 +358,9 @@ std::optional<std::string> Parser::addEntry(const std::string& path, const std::
 
 	std::error_code ec;
 	if (!std::filesystem::create_directories(pTargetDirectory, ec) && ec.value() != 0) {
-		return (boost::format("Failed create destination directory '%1%', error message: '%2%'") % pTargetDirectory.string() % ec.message()).str();
+		return (boost::format("Failed create destination directory '%1%', error message: '%2%'") %
+		        pTargetDirectory.string() % ec.message())
+		    .str();
 	}
 
 	std::ofstream addedEntry(pTarget.string(), std::ios::out);
@@ -383,7 +401,8 @@ void Parser::beautifyCode(std::string& payload) const
 {
 	const std::string              codeTagOpen  = R"(<code class="language-cpp">)";
 	const std::string              codeTagClose = R"(</code>)";
-	const std::unordered_set<char> resvWordSeparators{' ', '\t', '<', '>', '*', '&'};
+	const std::unordered_set<char> resvSeparatorsBefore{' ', '\t', '<', '*', '&'};
+	const std::unordered_set<char> resvSeparatorsAfter{' ', '\t', '>', '*', '&'};
 
 	auto snippetPos = payload.find(codeTagOpen);
 	while (snippetPos != std::string::npos) {
@@ -401,15 +420,25 @@ void Parser::beautifyCode(std::string& payload) const
 		for (const auto& resvW : cppReserverdWords_) {
 			auto resvWPos = formatMe.find(resvW);
 			while (resvWPos != std::string::npos) {
-				char chBefore = ' ';
-				if (resvWPos > 1) {
-					char chBefore = formatMe[resvWPos - 1];
-				}
-				char chAfter = formatMe[resvWPos + resvW.length()];
-				if (resvWordSeparators.count(chBefore) + resvWordSeparators.count(chAfter) > 1) {
+				char chBefore = (resvWPos == 0 ?: formatMe[resvWPos - 1]);
+				char chAfter  = formatMe[resvWPos + resvW.length()];
+
+				const auto validResvWord([&resvSeparatorsAfter, &resvSeparatorsBefore, &resvWPos](
+				                             char chBefore, char chAfter) {
+					if (resvWPos > 0 &&
+					    resvSeparatorsBefore.find(chBefore) == resvSeparatorsBefore.end())
+						return false;
+
+					if (resvSeparatorsAfter.find(chAfter) == resvSeparatorsAfter.end())
+						return false;
+
+					return true;
+				});
+
+				if (validResvWord(chBefore, chAfter)) {
 					needReplacement = true;
-					std::string replacement{"<strong>"};
-					replacement.append(resvW).append("</strong>");
+					std::string replacement{R"JS(<span class="cppreserved">)JS"};
+					replacement.append(resvW).append("</span>");
 					formatMe.replace(resvWPos, resvW.length(), replacement);
 					resvWPos += replacement.length();
 				}
