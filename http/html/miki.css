@@ -59,11 +59,17 @@ pre {
     display: table-cell;
 }
 
-.currentContent {
+.currentContent p strong {
+    color: azure;
 }
 
 .language-cpp {
     color: lightyellow;
+}
+
+.language-cpp .cppreserved {
+    color: greenyellow;
+    font-weight: bold;
 }
 
 .language-bash {
