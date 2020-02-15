@@ -12,7 +12,11 @@
 #include <regex>
 #include <string>
 #include <system_error>
+#include <unordered_set>
 #include <vector>
+
+#include "MimeTypes.h"
+#include "ReservedWords.h"
 
 // Temporary
 #include <iostream>
@@ -226,13 +230,13 @@ http::response<http::file_body> Parser::FileContents(std::filesystem::path&& tar
                                                      const bool              keepAlive)
 {
 	// Helper's lamdas
-	auto contentType([& mimeType_ = mimeType_](boost::beast::string_view path) {
+	auto contentType([& MimeTypes = MimeTypes](boost::beast::string_view path) {
 		if (const auto pos = path.rfind("."); pos == boost::beast::string_view::npos) {
 			return "application/text";
 		}
 		else {
 			std::string ext{path.substr(pos)};
-			if (const auto typeIt = mimeType_.find(ext); typeIt == mimeType_.end()) {
+			if (const auto typeIt = MimeTypes.find(ext); typeIt == MimeTypes.end()) {
 				return "application/text";
 			}
 			else {
@@ -399,10 +403,11 @@ std::optional<std::string> Parser::editEntry(const std::string& path, const std:
 
 void Parser::beautifyCode(std::string& payload) const
 {
-	const std::string              codeTagOpen  = R"(<code class="language-cpp">)";
-	const std::string              codeTagClose = R"(</code>)";
-	const std::unordered_set<char> resvSeparatorsBefore{' ', '\t', '<', '*', '&'};
-	const std::unordered_set<char> resvSeparatorsAfter{' ', '\t', '>', '*', '&'};
+	const std::string codeTagOpen  = R"(<code class="language-cpp">)";
+	const std::string codeTagClose = R"(</code>)";
+
+	const std::unordered_set<std::string> validPrePostSets{
+	    " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")"};
 
 	auto snippetPos = payload.find(codeTagOpen);
 	while (snippetPos != std::string::npos) {
@@ -416,26 +421,45 @@ void Parser::beautifyCode(std::string& payload) const
 		const auto  formatLen  = snippetTo - formatFrom;
 		std::string formatMe   = payload.substr(formatFrom, formatLen);
 
+		const auto validResvWord(
+		    [&validPrePostSets, &formatMe](const size_t pos, const std::string& word) {
+			    // Prefix first
+			    // If starts with some chars before reserved word
+			    if (pos > 0) {
+				    bool prefixValid{false};
+
+				    for (const auto& validSet : validPrePostSets) {
+					    if (validSet.size() > pos)
+						    continue;
+
+					    if (formatMe.substr(pos - validSet.size(), validSet.size()) == validSet) {
+						    prefixValid = true;
+						    break;
+					    }
+				    }
+
+				    if (!prefixValid)
+					    return false;
+			    }
+
+			    bool suffixValid{false};
+			    for (const auto& validSet : validPrePostSets) {
+				    if (pos + word.size() + validSet.size() > formatMe.size())
+					    continue;
+
+				    if (formatMe.substr(pos + word.size(), validSet.size()) == validSet) {
+					    suffixValid = true;
+					    break;
+				    }
+			    }
+			    return suffixValid;
+		    });
+
 		bool needReplacement = false;
-		for (const auto& resvW : cppReserverdWords_) {
+		for (const auto& resvW : CPPReserverWords) {
 			auto resvWPos = formatMe.find(resvW);
 			while (resvWPos != std::string::npos) {
-				char chBefore = (resvWPos == 0 ?: formatMe[resvWPos - 1]);
-				char chAfter  = formatMe[resvWPos + resvW.length()];
-
-				const auto validResvWord([&resvSeparatorsAfter, &resvSeparatorsBefore, &resvWPos](
-				                             char chBefore, char chAfter) {
-					if (resvWPos > 0 &&
-					    resvSeparatorsBefore.find(chBefore) == resvSeparatorsBefore.end())
-						return false;
-
-					if (resvSeparatorsAfter.find(chAfter) == resvSeparatorsAfter.end())
-						return false;
-
-					return true;
-				});
-
-				if (validResvWord(chBefore, chAfter)) {
+				if (validResvWord(resvWPos, resvW)) {
 					needReplacement = true;
 					std::string replacement{R"JS(<span class="cppreserved">)JS"};
 					replacement.append(resvW).append("</span>");
