@@ -63,19 +63,6 @@ pre {
     color: azure;
 }
 
-.language-cpp {
-    color: lightyellow;
-}
-
-.language-cpp .cppreserved {
-    color: greenyellow;
-    font-weight: bold;
-}
-
-.language-bash {
-    color: lightgrey;
-}
-
 .editBox {
     z-index: 1000;
     position: fixed;
@@ -98,3 +85,58 @@ pre {
     background-color: #371f06;
     color: lightyellow;
 }
+
+/* Languages hightlightimg */
+.language-cpp {
+    color: lightyellow;
+}
+
+.language-cpp .cppreserved {
+    color: greenyellow;
+    font-weight: bold;
+}
+
+.language-cpp .stlnamespaces {
+    color: cornflowerblue;
+    font-weight: bold;
+}
+
+.language-cpp .stlconstant {
+    color: darkgoldenrod;
+    font-weight: bold;
+}
+
+.language-cpp .stlexception {
+    color: cornsilk;
+    font-weight: bold;
+}
+
+.language-cpp .stlfunction {
+    color: gold;
+    font-weight: bold;
+}
+
+.language-cpp .stlfuntional {
+    color: goldenrod;
+    font-weight: bold;
+}
+
+.language-cpp .stltype {
+    color: cyan;
+    font-weight: bold;
+}
+
+.language-cpp .stlios {
+    color: cyan;
+    font-weight: bold;
+}
+
+.language-cpp  .stliterator {
+    color: cyan;
+    font-weight: bold;
+}
+
+.language-bash {
+    color: lightgrey;
+}
+

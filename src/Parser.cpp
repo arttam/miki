@@ -10,6 +10,7 @@
 #include <numeric>  // accumulate
 #include <optional>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <unordered_set>
@@ -406,8 +407,11 @@ void Parser::beautifyCode(std::string& payload) const
 	const std::string codeTagOpen  = R"(<code class="language-cpp">)";
 	const std::string codeTagClose = R"(</code>)";
 
-	const std::unordered_set<std::string> validPrePostSets{
-	    " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")"};
+	const std::unordered_set<std::string> validPreStrs{
+	    "::", " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")"};
+
+	const std::unordered_set<std::string> validPostStrs{
+	    "::", ";", " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")"};
 
 	auto snippetPos = payload.find(codeTagOpen);
 	while (snippetPos != std::string::npos) {
@@ -422,13 +426,13 @@ void Parser::beautifyCode(std::string& payload) const
 		std::string formatMe   = payload.substr(formatFrom, formatLen);
 
 		const auto validResvWord(
-		    [&validPrePostSets, &formatMe](const size_t pos, const std::string& word) {
+		    [&validPreStrs, &validPostStrs, &formatMe](const size_t pos, const std::string& word) {
 			    // Prefix first
 			    // If starts with some chars before reserved word
 			    if (pos > 0) {
 				    bool prefixValid{false};
 
-				    for (const auto& validSet : validPrePostSets) {
+				    for (const auto& validSet : validPreStrs) {
 					    if (validSet.size() > pos)
 						    continue;
 
@@ -443,7 +447,7 @@ void Parser::beautifyCode(std::string& payload) const
 			    }
 
 			    bool suffixValid{false};
-			    for (const auto& validSet : validPrePostSets) {
+			    for (const auto& validSet : validPostStrs) {
 				    if (pos + word.size() + validSet.size() > formatMe.size())
 					    continue;
 
@@ -456,22 +460,34 @@ void Parser::beautifyCode(std::string& payload) const
 		    });
 
 		bool needReplacement = false;
-		for (const auto& resvW : CPPReserverWords) {
-			auto resvWPos = formatMe.find(resvW);
-			while (resvWPos != std::string::npos) {
-				if (validResvWord(resvWPos, resvW)) {
-					needReplacement = true;
-					std::string replacement{R"JS(<span class="cppreserved">)JS"};
-					replacement.append(resvW).append("</span>");
-					formatMe.replace(resvWPos, resvW.length(), replacement);
-					resvWPos += replacement.length();
+		for (const auto& [tag, resvwords] : CPPFormatting) {
+			for (const auto& resvW : resvwords) {
+				auto resvWPos = formatMe.find(resvW);
+				while (resvWPos != std::string::npos) {
+					if (validResvWord(resvWPos, resvW)) {
+						needReplacement = true;
+
+						std::stringstream istr;
+						istr << "<span class=\"" << tag << "\">" << resvW << "</span>";
+
+						formatMe.replace(resvWPos, resvW.length(), istr.str());
+						resvWPos += istr.str().length();
+
+						istr.str("");
+					}
+					else {
+						resvWPos += resvW.length();
+					}
+					resvWPos = formatMe.find(resvW, resvWPos);
 				}
-				else {
-					resvWPos += resvW.length();
-				}
-				resvWPos = formatMe.find(resvW, resvWPos);
 			}
 		}
+
+		// TODO
+		// Check for #include directives - and amend accordingly
+
+		// Check for comments - and amend accordingly
+
 		if (needReplacement) {
 			payload.replace(formatFrom, formatLen, formatMe);
 			snippetTo = formatFrom + formatMe.length();
