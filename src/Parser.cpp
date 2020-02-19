@@ -408,10 +408,10 @@ void Parser::beautifyCode(std::string& payload) const
 	const std::string codeTagClose = R"(</code>)";
 
 	const std::unordered_set<std::string> validPreStrs{
-	    "::", " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")"};
+	    "::", " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")", "{"};
 
 	const std::unordered_set<std::string> validPostStrs{
-	    "::", ";", " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")"};
+	    "::", ";", " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")", ","};
 
 	auto snippetPos = payload.find(codeTagOpen);
 	while (snippetPos != std::string::npos) {
@@ -462,6 +462,7 @@ void Parser::beautifyCode(std::string& payload) const
 		bool needReplacement = false;
 		for (const auto& [tag, resvwords] : CPPFormatting) {
 			for (const auto& resvW : resvwords) {
+				// TODO: Skip already wrapped in span tag ???
 				auto resvWPos = formatMe.find(resvW);
 				while (resvWPos != std::string::npos) {
 					if (validResvWord(resvWPos, resvW)) {
