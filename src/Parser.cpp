@@ -413,6 +413,8 @@ void Parser::beautifyCode(std::string& payload) const
 	const std::unordered_set<std::string> validPostStrs{
 	    "::", ";", " ", "\n", "\t", "&lt;", "&gt;", "*", "&amp;", "(", ")", ","};
 
+	const std::string blanks{" \t\n;.,(){}:/\\<>[]!*=&+-"};
+
 	auto snippetPos = payload.find(codeTagOpen);
 	while (snippetPos != std::string::npos) {
 		auto snippetTo = payload.find(codeTagClose, snippetPos + 1);
@@ -425,61 +427,49 @@ void Parser::beautifyCode(std::string& payload) const
 		const auto  formatLen  = snippetTo - formatFrom;
 		std::string formatMe   = payload.substr(formatFrom, formatLen);
 
-		const auto validResvWord(
-		    [&validPreStrs, &validPostStrs, &formatMe](const size_t pos, const std::string& word) {
-			    // Prefix first
-			    // If starts with some chars before reserved word
-			    if (pos > 0) {
-				    bool prefixValid{false};
+		size_t pos     = 0;
+		size_t lastPos = 0;
+		bool   isAlpha = std::isalpha(formatMe[0]);
 
-				    for (const auto& validSet : validPreStrs) {
-					    if (validSet.size() > pos)
-						    continue;
+		std::vector<std::pair<std::string, bool>> asVect;
+		while (true) {
+			pos = (isAlpha ? formatMe.find_first_of(blanks, pos)
+			               : formatMe.find_first_not_of(blanks, pos));
+			if (pos == std::string::npos) {
+				asVect.push_back(std::make_pair(formatMe.substr(lastPos), isAlpha));
+				break;
+			}
+			asVect.push_back(std::make_pair(formatMe.substr(lastPos, pos - lastPos), isAlpha));
+			isAlpha = !isAlpha;
+			lastPos = pos;
+		}
 
-					    if (formatMe.substr(pos - validSet.size(), validSet.size()) == validSet) {
-						    prefixValid = true;
-						    break;
-					    }
-				    }
-
-				    if (!prefixValid)
-					    return false;
-			    }
-
-			    bool suffixValid{false};
-			    for (const auto& validSet : validPostStrs) {
-				    if (pos + word.size() + validSet.size() > formatMe.size())
-					    continue;
-
-				    if (formatMe.substr(pos + word.size(), validSet.size()) == validSet) {
-					    suffixValid = true;
-					    break;
-				    }
-			    }
-			    return suffixValid;
+		std::vector<std::reference_wrapper<std::pair<std::string, bool>>> candidates;
+		std::copy_if(
+		    asVect.begin(), asVect.end(), std::back_inserter(candidates), [](const auto& el) {
+			    return el.second;
 		    });
 
 		bool needReplacement = false;
 		for (const auto& [tag, resvwords] : CPPFormatting) {
+			std::string cssClass{"<span class=\""};
+			cssClass.append(tag).append("\">");
+
 			for (const auto& resvW : resvwords) {
-				// TODO: Skip already wrapped in span tag ???
-				auto resvWPos = formatMe.find(resvW);
-				while (resvWPos != std::string::npos) {
-					if (validResvWord(resvWPos, resvW)) {
-						needReplacement = true;
+				const auto candidatePred([&resvW](const auto& el) {
+					return el.get().first == resvW;
+				});
 
-						std::stringstream istr;
-						istr << "<span class=\"" << tag << "\">" << resvW << "</span>";
+				auto foundIt = std::find_if(candidates.begin(), candidates.end(), candidatePred);
+				while (foundIt != candidates.end()) {
+					needReplacement = true;
+					foundIt->get().first.insert(0, cssClass);
+					foundIt->get().first.append("</span>");
+					foundIt->get().second = false;
 
-						formatMe.replace(resvWPos, resvW.length(), istr.str());
-						resvWPos += istr.str().length();
+					candidates.erase(foundIt);
 
-						istr.str("");
-					}
-					else {
-						resvWPos += resvW.length();
-					}
-					resvWPos = formatMe.find(resvW, resvWPos);
+					foundIt = std::find_if(candidates.begin(), candidates.end(), candidatePred);
 				}
 			}
 		}
@@ -490,8 +480,15 @@ void Parser::beautifyCode(std::string& payload) const
 		// Check for comments - and amend accordingly
 
 		if (needReplacement) {
-			payload.replace(formatFrom, formatLen, formatMe);
-			snippetTo = formatFrom + formatMe.length();
+			std::string formatted = std::accumulate(asVect.begin(),
+			                                        asVect.end(),
+			                                        std::string{},
+			                                        [](std::string& result, const auto& ve) {
+				                                        result += ve.first;
+				                                        return result;
+			                                        });
+			payload.replace(formatFrom, formatLen, formatted);
+			snippetTo = formatFrom + formatted.length();
 		}
 
 		// snippedTo must me amended if changes were done
