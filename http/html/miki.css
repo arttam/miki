@@ -55,6 +55,15 @@ pre {
     display: table-cell;
 }
 
+.currentContentList ul {
+    list-style-type: none;
+}
+
+.currentListSelection {
+    color: yellow;
+    background-color: #001a11;
+}
+
 .currentContentDiv {
     display: table-cell;
 }

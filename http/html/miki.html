@@ -63,6 +63,11 @@
             }
             else
             {
+                var listItems = contentsList.getElementsByTagName('li');
+                for (var idx=0; idx < listItems.length; ++idx) {
+                    listItems[idx].className = "";
+                }
+                event.target.className = "currentListSelection ";
                 JSAccessorInst.get(thisPath, Module.ResourceType.Page);
             }
         });
