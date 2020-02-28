@@ -1,38 +1,89 @@
 :root {
---gb-dm-bg0: #282828;
---gb-dm-bg0-hard: #1d2021;
---gb-dm-bg0-soft: #32302f;
---gb-dm-bg1: #3c3836;
---gb-dm-bg2: #504945;
---gb-dm-bg3: #665c54;
---gb-dm-bg4: #7c6f64;
-
-/* Dark Foreground */
---gb-dm-fg0: #fbf1c7;
---gb-dm-fg1: #ebdbb2;
---gb-dm-fg2: #d5c4a1;
---gb-dm-fg3: #bdae93;
---gb-dm-fg4: #a89984;
-
-/* Dark Colors */
---gb-dm-dark-red: #cc241d;
---gb-dm-dark-green: #98971a;
---gb-dm-dark-yellow: #d79921;
---gb-dm-dark-blue: #458588;
---gb-dm-dark-purple: #b16286;
---gb-dm-dark-aqua: #689d6a;
---gb-dm-dark-orange: #d65d0e;
---gb-dm-dark-gray: #928374;
-
-/* Light Colors I*/
---gb-dm-light-red: #fb4934;
---gb-dm-light-green: #b8bb26;
---gb-dm-light-yellow: #fabd2f;
---gb-dm-light-blue: #83a598;
---gb-dm-light-purple: #d3869b;
---gb-dm-light-aqua: #8ec07c;
---gb-dm-light-orange: #f38019;
---gb-dm-light-gray: #a89984;
+--DefaultBackground: #282828;
+--DefaultForeground: #fbf1c7;
+--DefaultPlainText: #ebdbb2;
+--NamespaceTag: #9e5d7a;
+--NamespaceAliasTag: #9e5d7a;
+--ClassTag: #0099ff;
+--StructureTag: #0099ff;
+--UnionTag: #0099ff;
+--EnumTag: #0099ff;
+--EnumValueTag: #ffd659;
+--FieldTag: #42cdff;
+--LocalVariableTag: #0099ff;
+--FunctionParameterTag: #0099ff;
+--MethodTag: #ffd659;
+--FunctionTag: #ffd659;
+--TemplateTypeParameterTag: #4c8a5f;
+--TemplateNonTypeParameterTag: #4c8a5f;
+--TemplateTemplateParameterTag: #4c8a5f;
+--MacroDefinitionTag: #fa9a4b;
+--MacroInstantiationTag: #fa9a4b;
+--TypedefTag: #0099ff;
+--UsingDirectiveTag: #f6f080;
+--UsingDeclarationTag: #f6f080;
+--Structure: #ba763a;
+--StorageClass: #0099ff;
+--Macro: #ba763a;
+--Function: #72aaca;
+--Normal: #e0e0e0;
+--NonText: #2d3033;
+--Comment: #60666b;
+--Constant: #ffd659;
+--Character: #ffd659;
+--Identifier: #f6f080;
+--PreProc: #fa9a4b;
+--Include: #ba763a;
+--Define: #fa9a4b;
+--PreCondit: #fa9a4b;
+--Special: #f8f8f8;
+--SpecialChar: #f8f8f8;
+--Tag: #72aaca;
+--Delimiter: #f8f8f8;
+--SpecialComment: #f8f8f8;
+--Debug: #f8f8f8;
+--Statement: #ba763a;
+--Conditional: #ba763a;
+--Repeat: #ba763a;
+--Label: #f6f6f6;
+--Type: #0099ff;
+--Operator: #fa9a4b;
+--Exception: #0099ff;
+--Keyword: #fa9a4b;
+--String: #9298a1;
+--Number: #ffd659;
+--Float: #ffd659;
+--Boolean: #ffd659;
+--Todo: #798188;
+--StatusLine: #f8f8f8;
+--StatusLineNC: #b8b8b8;
+--VertSplit: #2d3033;
+--TabLine: #797a7b;
+--TabLineFill: #e2e4e5;
+--TabLineSel: #c9cacb;
+--Title: #f8f8f8;
+--LineNr: #515253;
+--PMenu: #949ba1;
+--PMenuSbar: #cdcecf;
+--PMenuSel: #ffffff;
+--PMenuThumb: #82898f;
+--FoldColumn: #798188;
+--Folded: #798188;
+--WildMenu: #1c1c1c;
+--SpecialKey: #7a8288;
+--DiffAdd: #f8f8f8;
+--DiffDelete: #8F433D;
+--Search: #16191c;
+--IncSearch: #16191c;
+--Directory: #898d8a;
+--MatchParen: #26292c;
+--ColorColumn: #c5beba;
+--SignColumn: #a8c1c5;
+--ErrorMsg: #f8f8f8;
+--ModeMsg: #a0a0a0;
+--MoreMsg: #a8c1c5;
+--Question: #a0a0a0;
+--WarningMsg: #f8f8f8;
 }
 
 body {
@@ -129,60 +180,60 @@ body {
 
 /* Languages hightlightimg */
 pre {
-    background-color: var(--gb-dm-bg0);
-    color: var(--gb-dm-fg0);
+    background-color: var(--DefaultBackground);
+    color: var(--DefaultForeground);
 }
 
 .language-cpp {
-    color: var(--gb-dm-fg0);
+    color: var(--Normal);
 }
 
 .language-cpp .cppreserved {
-    color: var(--gb-dm-dark-purple);
+    color: var(--Keyword);
     font-weight: bold;
 }
 
 .language-cpp .stlnamespaces {
-    color: var(--gb-dm-dark-blue);
+    color: var(--NamespaceTag);
     font-weight: bold;
 }
 
 .language-cpp .stlconstant {
-    color: var(--gb-dm-dark-aqua);
+    color: var(--Constant);
     font-weight: bold;
 }
 
 .language-cpp .stlexception {
-    color: var(--gb-dm-dark-red);
+    color: var(--Exception);
     font-weight: bold;
 }
 
 .language-cpp .stlfunction {
-    color: var(--gb-dm-dark-yellow);
+    color: var(--FunctionTag);
     font-weight: bold;
 }
 
 .language-cpp .stlfuntional {
-    color: var(--gb-dm-dark-yellow);
+    color: var(--FunctionTag);
     font-weight: bold;
 }
 
 .language-cpp .stltype {
-    color: var(--gb-dm-dark-orange);
+    color: var(--Type);
     font-weight: bold;
 }
 
 .language-cpp .stlios {
-    color: var(--gb-dm-dark-orange);
+    color: var(--TypedefTag);
     font-weight: bold;
 }
 
 .language-cpp  .stliterator {
-    color: var(--gb-dm-dark-orange);
+    color: var(--Identifier);
     font-weight: bold;
 }
 
 .language-bash {
-    color: var(--gb-dm-fg1); 
+    color: var(--DefaultPlainText); 
 }
 
