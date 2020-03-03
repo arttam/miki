@@ -427,6 +427,40 @@ void Parser::beautifyCode(std::string& payload) const
 		const auto  formatLen  = snippetTo - formatFrom;
 		std::string formatMe   = payload.substr(formatFrom, formatLen);
 
+		bool        includesFound = false;
+		size_t      lastInclude   = 0;
+		std::string includeLines;
+
+		std::istringstream iss{formatMe};
+		for (std::string line; std::getline(iss, line);) {
+			if (line.empty()) {  // New line
+				++lastInclude;
+				continue;
+			}
+
+			const std::regex includeRE(R"(^#include &.*$)");
+			if (std::regex_match(line, includeRE)) {
+				includesFound      = true;
+				auto firstSpacePos = line.find_first_of(' ');
+				includeLines += "<span class=\"includes\">";
+				includeLines += line.substr(0, firstSpacePos);
+				includeLines += "</span><span class=\"includedfile\">";
+				includeLines += line.substr(firstSpacePos);
+				includeLines += "</span>\n";
+
+				lastInclude += line.length();
+				++lastInclude;
+			}
+			else {
+				break;  // First non-include line - leaving
+			}
+		}
+
+		if (includesFound) {
+			includeLines += "\n";
+			formatMe.erase(0, lastInclude);
+		}
+
 		size_t pos     = 0;
 		size_t lastPos = 0;
 		bool   isAlpha = std::isalpha(formatMe[0]);
@@ -474,19 +508,22 @@ void Parser::beautifyCode(std::string& payload) const
 			}
 		}
 
-		// TODO
-		// Check for #include directives - and amend accordingly
+		if (needReplacement || includesFound) {
+			std::string formatted;
+			if (needReplacement) {
+				formatted = std::accumulate(asVect.begin(),
+				                            asVect.end(),
+				                            std::string{},
+				                            [](std::string& result, const auto& ve) {
+					                            result += ve.first;
+					                            return result;
+				                            });
+			}
 
-		// Check for comments - and amend accordingly
+			if (includesFound) {
+				formatted.insert(0, includeLines);
+			}
 
-		if (needReplacement) {
-			std::string formatted = std::accumulate(asVect.begin(),
-			                                        asVect.end(),
-			                                        std::string{},
-			                                        [](std::string& result, const auto& ve) {
-				                                        result += ve.first;
-				                                        return result;
-			                                        });
 			payload.replace(formatFrom, formatLen, formatted);
 			snippetTo = formatFrom + formatted.length();
 		}

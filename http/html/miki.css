@@ -34,6 +34,7 @@
 --Identifier: #f6f080;
 --PreProc: #fa9a4b;
 --Include: #ba763a;
+--IncludeFile: #fa9a4b;
 --Define: #fa9a4b;
 --PreCondit: #fa9a4b;
 --Special: #f8f8f8;
@@ -186,6 +187,16 @@ pre {
 
 .language-cpp {
     color: var(--Normal);
+}
+
+.language-cpp .includes {
+    color: var(--Include);
+    font-style: italic;
+}
+
+.language-cpp .includedfile {
+    color: var(--IncludeFile);
+    font-style: italic;
 }
 
 .language-cpp .cppreserved {
