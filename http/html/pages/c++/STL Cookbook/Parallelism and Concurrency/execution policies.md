@@ -123,3 +123,41 @@ The stricter the specific constraints, the more parallelization strategy measure
 
 All element access functions used by the parallelized algorithm must not cause deadlocks or data races \
 In the case of parallelism and vectorization, all the access functions must not use any kind of blocking synchronization
+
+**TODO** make following sample work on mac and compare parallel vs sequential execution times
+```cpp
+#include <algorithm>
+#include <execution>
+#include <iostream>
+#include <random>
+#include <vector>
+
+using namespace std;
+
+static bool odd(int n)
+{
+	return n % 2;
+}
+
+int main()
+{
+	vector<int> d(500);
+
+	mt19937                       gen;
+	uniform_int_distribution<int> dis(0, 100000);
+
+	auto rand_num([=]() mutable {
+		return dis(gen);
+	});
+
+	generate(execution::par, begin(d), end(d), rand_num);
+
+	sort(execution::par, begin(d), end(d));
+
+	reverse(execution::par, begin(d), end(d));
+
+	auto odds(count_if(execution::par, begin(d), end(d), odd));
+
+	cout << (100.0 * odds / d.size()) << "% of the numbers are odd.\n";
+}
+```
