@@ -1,4 +1,4 @@
 ### Thanks to
 
-Excerpt From: 
+Excerpts From: 
 **Jacek Galowicz**. ***“C++17 STL Cookbook”***. 
