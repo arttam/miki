@@ -193,12 +193,12 @@ http::response<http::string_body> Parser::FileTree(std::filesystem::path&& targe
 		std::vector<Resource> resources;
 
 		if (fs::is_regular_file(target)) {
-			resources.emplace_back(
-			    target.filename().string(), target.relative_path().string(), 'p');
+			resources.emplace_back(target.stem().string(), target.relative_path().string(), 'p');
 		}
 		else if (fs::is_directory(target)) {
 			for (const fs::directory_entry& de : fs::directory_iterator(target)) {
-				resources.emplace_back(de.path().filename().string(),
+				resources.emplace_back((fs::is_directory(de) ? de.path().filename().string()
+				                                             : de.path().stem().string()),
 				                       de.path().relative_path().string().substr(2),
 				                       fs::is_directory(de) ? 'd' : 'p');
 			}
