@@ -1,0 +1,6 @@
+.clang-format
+.vscode
+bin
+build
+certs
+compile_commands.json
