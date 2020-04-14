@@ -20,7 +20,7 @@ void user() {
 	t2.join();
 }
 ```
-The **join()**s ensure that we don’t exit user() until the threads have completed. \
+The **join()** ensure that we don’t exit user() until the threads have completed. \
 To ‘‘join’’ a thread means to ‘‘wait for the thread to terminate.’’
 
 ```cpp
