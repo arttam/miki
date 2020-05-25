@@ -31,3 +31,30 @@ else
     std::cerr << "Method not found" << std::endl;
 }
 ```
+
+Having, for example
+```cpp
+bool Organiser::Scene::productPlacement();
+```
+I.e. class method without parameters
+
+Mapping as follows
+```cpp
+   // Placement type checkers map
+   std::unordered_map<std::string, std::function<bool(const Organiser::Scene*)>> typeChecker{
+      {"Signage",   &Organiser::Scene::signagePlacement},
+      {"ProductPl", &Organiser::Scene::productPlacement},
+      {"Video",     &Organiser::Scene::videoPlacement},
+      {"Other",     &Organiser::Scene::otherPlacement}};
+      
+```
+
+Invocation
+```cpp
+     // Individual type stats update
+     for (const auto placement : {"Signage", "ProductPl", "Video", "Other"})
+     {
+	if (typeChecker[placement](scene))
+	{
+	...
+```
