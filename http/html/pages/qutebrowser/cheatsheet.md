@@ -7,7 +7,7 @@
 
 *+*: zoom-in \
 *-*: zoom-out \
-*=*: zoom 100% \
+*=*: zoom 100%
 
 *.*: repeat-command
 
@@ -24,9 +24,9 @@
 *;t*: hint inputs
 
 *B*: set-cmd-text -s :quickmark-load -t | *b*: set-cmd-text -s :quickmark-load \
-*F*: hint all tab | *f*: hint \
+*F*: hint all tab | *f*: hint
 
-*gi*: hint inputs --first \
+*gi*: hint inputs --first
 
 *H*: back \
 *J*: tab-next \
@@ -37,7 +37,7 @@
 *O*: set-cmd-text -s :open -t \
 *R*: reload -f | r: reload \
 *U*: undo -w \
-*V*: mode-enter caret ;; selection-toggle --line \
+*V*: mode-enter caret ;; selection-toggle --line
 
 ### Scrolling
 *G*: scroll-to-perc \
@@ -65,12 +65,12 @@
 
 *gm*: tab-move \
 *gJ*: tab-move + \
-*gK*: tab-move - \
+*gK*: tab-move -
 
 *gU*: navigate up -t \
 *g^*: tab-focus 1 \
 *ga*: open -t \
-*gu*: navigate up \
+*gu*: navigate up
 
 *h*: scroll left \
 *i*: mode-enter insert \
@@ -81,7 +81,7 @@
 *n*: search-next \
 *o*: set-cmd-text -s :open \
 *u*: undo \
-*v*: mode-enter caret \
+*v*: mode-enter caret
 
 *th*: back -t \
 *tl*: forward -t
