@@ -38,3 +38,12 @@ Then it needs network for docker, which can be achieved by:
 # systemctl daemon-reload 
 # systemctl start docker.service
 ```
+
+### In order not to type sudo every time, add user to docker group
+```bash
+sudo usermod -aG docker username
+
+or 
+
+sudo usermod -aG docker ${USER} # for current user
+```

@@ -122,4 +122,4 @@ derivirations(TBases...)->derivirations<TBases...>;
 ```
 Compiler does not know which one to use
 Called ***deduction guide***
-More details in:https://en.cppreference.com/w/cpp/language/class_template_argument_deduction
+More details [here](https://en.cppreference.com/w/cpp/language/class_template_argument_deduction)
