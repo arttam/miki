@@ -8,3 +8,9 @@ git ls-files -m
 ```bash
 git diff --name-only <anotherBranch>
 ```
+
+## List only filenams and statuses of changes
+```bash
+git diff --name-status <OLDEST>..<NEWEST>
+```
+

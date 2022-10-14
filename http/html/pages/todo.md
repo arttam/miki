@@ -1,15 +1,13 @@
-- [ ] ftgl version
-- [ ] merge stable\-9.3 with normal name and see results on \-test
-- [ ] working conan\-9.3 merge with CT\-809
-- [ ] Go to Windows land
+## Today
+
+- [ ] Build conan package on Linux
+- [ ] Make sure Bamboo based build works (for both configuraitons)
+
+Conan scripts repository:  
+https://bitbucket.mirriad.com/scm/thir/conan-activemq-cpp.git  
+Branch: activemq-3.10.1  
 
 
-- [ ] Build using Bamboo
-## Steps for Bamboo build
-1. Create container with 9.3 and stuff
-1. Create new plan by copying Existing build and pointing to new container
-1. Try it out
-
-# Thursday
-- [ ] CT-809 Windows part left "as is", Ubuntu part in gcc 9.3, wait for approvals, regression tests
-- [ ] CT-1173 created for follow up steps
+ActiveMQ amended source repository:  
+https://bitbucket.mirriad.com/scm/thir/activemq-cpp.git  
+Branch: amended-3.10-dp  
