@@ -1,13 +1,10 @@
-## Today
+## Miki
 
-- [ ] Build conan package on Linux
-- [ ] Make sure Bamboo based build works (for both configuraitons)
+### HTTP(s) libraries
+- https://www.lighttpd.net/
+- https://github.com/uNetworking/uWebSockets
+- https://github.com/yhirose/cpp-httplib
+- http://cppcms.com/wikipp/en/page/main
 
-Conan scripts repository:  
-https://bitbucket.mirriad.com/scm/thir/conan-activemq-cpp.git  
-Branch: activemq-3.10.1  
+Instead of own wheel ?
 
-
-ActiveMQ amended source repository:  
-https://bitbucket.mirriad.com/scm/thir/activemq-cpp.git  
-Branch: amended-3.10-dp  
