@@ -1,14 +1,11 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.25)
 project(miki CXX)
-
-#set (CMAKE_CXX_COMPILER /usr/local/bin/g++-9)
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 # Boost
-# Boost warning hack (macOS only)
 set (Boost_NO_BOOST_CMAKE ON)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS system thread filesystem)
 if (NOT Boost_FOUND)
